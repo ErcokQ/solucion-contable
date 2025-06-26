@@ -1,0 +1,237 @@
+openapi: 3.1.0
+info:
+  title: Sistema Contable API
+  version: "1.0.0"
+  description: >
+    Contrato OpenAPI 3.1 para la primera iteración del módulo
+    Seguridad + Importador/Consulta CFDI.
+  contact:
+    name: Desarrollador
+    email: pendiente@contacto.com
+servers:
+  - url: /api/sc/v1
+tags:
+  - name: Auth
+    description: Autenticación y recuperación de contraseña
+  - name: CFDI
+    description: Importación y consulta de CFDI
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: integer }
+        message: { type: string }
+        details:
+          type: object
+          additionalProperties: true
+    UserSignup:
+      type: object
+      required: [fullname, email, username, password]
+      properties:
+        fullname: { type: string, maxLength: 120 }
+        email:    { type: string, format: email }
+        username: { type: string }
+        password: { type: string, format: password, minLength: 12 }
+    UserSignin:
+      type: object
+      required: [usernameOrEmail, password]
+      properties:
+        usernameOrEmail: { type: string }
+        password:        { type: string, format: password }
+    User:
+      type: object
+      required: [id, fullname, email, username]
+      properties:
+        id:       { type: integer }
+        fullname: { type: string }
+        email:    { type: string, format: email }
+        username: { type: string }
+    AuthToken:
+      type: object
+      required: [accessToken]
+      properties:
+        accessToken: { type: string }
+    CfdiHeader:
+      type: object
+      required: [uuid, rfcEmisor, rfcReceptor, fecha, total]
+      properties:
+        uuid:         { type: string }
+        rfcEmisor:    { type: string }
+        rfcReceptor:  { type: string }
+        fecha:        { type: string, format: date }
+        total:        { type: number, format: double }
+paths:
+  /auth/signup:
+    post:
+      tags: [Auth]
+      summary: Registro de usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserSignup' }
+      responses:
+        "201":
+          description: Usuario creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        "409":
+          description: Email o username duplicado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        "422":
+          description: Datos inválidos
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /auth/signin:
+    post:
+      tags: [Auth]
+      summary: Inicio de sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserSignin' }
+      responses:
+        "200":
+          description: Token de acceso
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthToken' }
+        "401":
+          description: Datos incorrectos
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /auth/forgot:
+    post:
+      tags: [Auth]
+      summary: Solicita restablecer contraseña
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "202":
+          description: Si la cuenta existe se envía correo
+        "422":
+          description: Email inválido
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /auth/reset/{token}:
+    post:
+      tags: [Auth]
+      summary: Restablece contraseña con token
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string, format: password, minLength: 12 }
+      responses:
+        "200":
+          description: Contraseña actualizada
+        "400":
+          description: Token inválido o expirado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /cfdi/uploads:
+    post:
+      tags: [CFDI]
+      summary: Sube uno o varios XML para procesamiento
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items: { type: string, format: binary }
+      responses:
+        "202":
+          description: Archivos aceptados y encolados
+        "415":
+          description: Tipo de archivo no soportado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /cfdi/process:
+    post:
+      tags: [CFDI]
+      summary: Dispara procesamiento de CFDI pendientes
+      security: [ { bearerAuth: [] } ]
+      responses:
+        "202":
+          description: Tarea encolada
+  /cfdi:
+    get:
+      tags: [CFDI]
+      summary: Lista CFDI con filtros
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: query
+          name: rfcEmisor
+          schema: { type: string }
+        - in: query
+          name: fechaDesde
+          schema: { type: string, format: date }
+        - in: query
+          name: fechaHasta
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Lista de CFDI
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CfdiHeader' }
+  /cfdi/{uuid}:
+    get:
+      tags: [CFDI]
+      summary: Obtiene CFDI por UUID
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: path
+          name: uuid
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: CFDI encontrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CfdiHeader' }
+        "404":
+          description: CFDI no encontrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }

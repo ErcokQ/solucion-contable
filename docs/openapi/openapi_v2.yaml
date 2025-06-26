@@ -1,0 +1,626 @@
+openapi: 3.0.3
+info:
+  title: Sistema Contable API
+  version: 1.0.1
+  description: 'Contrato OpenAPI 3.1 para el Sistema Contable (SC).   Versión 1.0.1
+    - incluye rutas de **Users / Roles / Permissions** y los módulos **Payments**
+    y **Payroll**, además de utilidades del importador CFDI.
+
+    '
+servers:
+- url: /api/sc/v1
+tags:
+- name: Auth
+  description: Autenticación y recuperación de contraseña
+- name: Users
+  description: Gestión de usuarios
+- name: Roles
+  description: Gestión de roles
+- name: Permissions
+  description: Listado de permisos
+- name: CFDI
+  description: Importación y consulta de CFDI
+- name: Payments
+  description: Complemento de pagos
+- name: Payroll
+  description: Complemento de nómina
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+    UserSignup: &id001
+      type: object
+      required:
+      - fullname
+      - email
+      - username
+      - password
+      properties:
+        fullname:
+          type: string
+          maxLength: 120
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+          minLength: 12
+    UserSignin:
+      type: object
+      required:
+      - usernameOrEmail
+      - password
+      properties:
+        usernameOrEmail:
+          type: string
+        password:
+          type: string
+          format: password
+    User:
+      type: object
+      required:
+      - id
+      - fullname
+      - email
+      - username
+      properties:
+        id:
+          type: integer
+        fullname:
+          type: string
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        activo:
+          type: boolean
+    Role:
+      type: object
+      required:
+      - id
+      - name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+    Permission:
+      type: object
+      required:
+      - id
+      - code
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        description:
+          type: string
+    CfdiHeader:
+      type: object
+      required:
+      - uuid
+      - rfcEmisor
+      - rfcReceptor
+      - fecha
+      - total
+      properties:
+        uuid:
+          type: string
+        rfcEmisor:
+          type: string
+        rfcReceptor:
+          type: string
+        fecha:
+          type: string
+          format: date
+        total:
+          type: number
+          format: double
+    PaymentHeader:
+      type: object
+      required:
+      - id
+      - cfdiHeaderId
+      - fechaPago
+      - monto
+      properties:
+        id:
+          type: integer
+        cfdiHeaderId:
+          type: integer
+        fechaPago:
+          type: string
+          format: date
+        monto:
+          type: number
+          format: double
+    PayrollHeader:
+      type: object
+      required:
+      - id
+      - cfdiHeaderId
+      - tipoNomina
+      - fechaPago
+      properties:
+        id:
+          type: integer
+        cfdiHeaderId:
+          type: integer
+        tipoNomina:
+          type: string
+        fechaPago:
+          type: string
+          format: date
+  responses:
+    BadRequest:
+      description: Solicitud inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Token JWT ausente o inválido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflicto de datos
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+paths:
+  /auth/signup:
+    post:
+      tags:
+      - Auth
+      summary: Registro de usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: *id001
+      responses:
+        '201':
+          description: Usuario creado
+        '409':
+          description: Email o username duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/signin:
+    post:
+      tags:
+      - Auth
+      summary: Inicio de sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSignin'
+      responses:
+        '200':
+          description: Token de acceso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/forgot:
+    post:
+      tags:
+      - Auth
+      summary: Genera token de recuperación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '202':
+          description: Email enviado si la cuenta existe
+  /auth/reset/{token}:
+    post:
+      tags:
+      - Auth
+      summary: Restablece contraseña
+      parameters:
+      - in: path
+        name: token
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - password
+              properties:
+                password:
+                  type: string
+                  format: password
+                  minLength: 12
+      responses:
+        '200':
+          description: Contraseña actualizada
+        '400':
+          description: Token inválido o expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users:
+    get:
+      tags:
+      - Users
+      summary: Lista usuarios
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    post:
+      tags:
+      - Users
+      summary: Crea usuario
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: *id001
+      responses:
+        '201':
+          description: Usuario creado
+  /users/{id}:
+    get:
+      tags:
+      - Users
+      summary: Obtiene usuario
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Usuario encontrado
+        '404':
+          description: Usuario no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      tags:
+      - Users
+      summary: Actualiza usuario
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Usuario actualizado
+    delete:
+      tags:
+      - Users
+      summary: Elimina usuario
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+      responses:
+        '204':
+          description: Usuario eliminado
+  /roles:
+    get:
+      tags:
+      - Roles
+      summary: Lista roles
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+    post:
+      tags:
+      - Roles
+      summary: Crea rol
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+      responses:
+        '201':
+          description: Rol creado
+  /roles/{id}:
+    get:
+      tags:
+      - Roles
+      summary: Obtiene rol
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Rol encontrado
+    patch:
+      tags:
+      - Roles
+      summary: Actualiza rol
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+      responses:
+        '200':
+          description: Rol actualizado
+    delete:
+      tags:
+      - Roles
+      summary: Elimina rol
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+      responses:
+        '204':
+          description: Rol eliminado
+  /permissions:
+    get:
+      tags:
+      - Permissions
+      summary: Lista permisos
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de permisos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permission'
+  /cfdi/uploads:
+    post:
+      tags:
+      - CFDI
+      summary: Sube XML(s)
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '202':
+          description: Archivos encolados
+  /cfdi/process:
+    post:
+      tags:
+      - CFDI
+      summary: Procesa CFDI pendientes
+      security:
+      - bearerAuth: []
+      responses:
+        '202':
+          description: Job lanzado
+  /cfdi/files/pending:
+    get:
+      tags:
+      - CFDI
+      summary: Lista XML pendientes de procesar
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: query
+        name: rfcEmisor
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Lista de archivos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /payments:
+    get:
+      tags:
+      - Payments
+      summary: Lista complementos de pago
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de pagos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentHeader'
+  /payments/{id}:
+    get:
+      tags:
+      - Payments
+      summary: Obtiene un pago
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Pago encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentHeader'
+        '404':
+          description: Pago no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /payroll:
+    get:
+      tags:
+      - Payroll
+      summary: Lista recibos de nómina
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de nómina
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PayrollHeader'
+  /payroll/{id}:
+    get:
+      tags:
+      - Payroll
+      summary: Obtiene recibo de nómina
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Recibo encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollHeader'
+        '404':
+          description: Recibo no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

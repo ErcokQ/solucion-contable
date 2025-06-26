@@ -1,0 +1,59 @@
+{
+  "name": "solucion-contable",
+  "version": "1.0.0",
+  "main": "./src/app.ts",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepare": "husky",
+    "format": "prettier --write \"src/**/*.{ts,tsx,md,json}\"",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "docs:serve": "npx swagger-ui-watcher ./docs/openapi/openapi_v2.yaml --port 4000",
+    "dev": "nodemon --watch src --exec \"ts-node -r tsconfig-paths/register src/app.ts\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/yamljs": "^0.2.34",
+    "@typescript-eslint/eslint-plugin": "^8.35.0",
+    "@typescript-eslint/parser": "^8.35.0",
+    "@vitest/coverage-istanbul": "^3.2.4",
+    "eslint": "^9.29.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.5.1",
+    "husky": "^9.1.7",
+    "jest": "^30.0.3",
+    "lint-staged": "^16.1.2",
+    "nodemon": "^3.1.10",
+    "prettier": "^3.6.1",
+    "swagger-ui-watcher": "^2.1.14",
+    "ts-jest": "^29.4.0",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "bullmq": "^5.56.0",
+    "class-validator": "^0.14.2",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "mysql2": "^3.14.1",
+    "swagger-ui-express": "^5.0.1",
+    "tsyringe": "^4.10.0",
+    "typeorm": "^0.3.25",
+    "yamljs": "^0.3.0"
+  }
+}
