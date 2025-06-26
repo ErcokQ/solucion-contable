@@ -6,5 +6,4 @@ import { BcryptService } from '@shared/security/BcryptService';
 container.register('HashService', { useClass: BcryptService });
 */
 
-
 export { container };

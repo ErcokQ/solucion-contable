@@ -1,10 +1,10 @@
-import { Router } from "express";
+import { Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import path from 'node:path';
 
 const spec = YAML.load(
-   path.join(__dirname, '..', '..', 'docs/openapi/openapi_v2.yaml')
+  path.join(__dirname, '..', '..', 'docs/openapi/openapi_v2.yaml'),
 );
 
 export const docsRouter = Router();

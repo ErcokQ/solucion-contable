@@ -1,9 +1,9 @@
 import 'dotenv/config';
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import { healthRouter } from './routes/health.router';
 import { docsRouter } from './routes/docs.router';
 import { ApiError } from './shared/error/ApiError';
-import { container } from './shared/container';   // inyecta dependencias (no usado aún)
+// import { container } from './shared/container';   // inyecta dependencias (no usado aún)
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -20,7 +20,7 @@ app.use(docsRouter);
 app.use((_req, _res, next) => next(new ApiError(404, 'Ruta Inexistente')));
 
 // Manejador de errores
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+app.use((err: Error, _req: Request, res: Response) => {
   const status = err instanceof ApiError ? err.status : 500;
   res.status(status).json({
     error: {
