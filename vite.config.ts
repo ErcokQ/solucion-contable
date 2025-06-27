@@ -14,6 +14,15 @@ export default defineConfig({
         branches: 65,
         functions: 70,
       },
+      exclude: [
+        'src/routes/*.router.ts',
+        'src/shared/container.ts',
+        'src/shared/error/ApiError.ts',
+        'docs/**',
+        'src/tmp/**',
+        'jest.config.js',
+        '.eslintrc.js',
+      ],
     },
   },
   resolve: {
