@@ -2,21 +2,28 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    globals: true,          // describe/it sin importar
-    environment: 'node',    // entorno Node
+    globals: true, // describe/it sin importar
+    environment: 'node', // entorno Node
     include: ['src/**/*.spec.ts'],
-     coverage: {
+    coverage: {
       reporter: ['text', 'html'],
-    provider: 'istanbul',
+      provider: 'istanbul',
+      thresholds: {
+        lines: 75,
+        statements: 75,
+        branches: 65,
+        functions: 70,
+      },
     },
   },
   resolve: {
     alias: {
-      '@shared':  '/src/shared',
-      '@auth':    '/src/modules/auth',
-      '@cfdi':    '/src/modules/cfdi',
-      '@payments':'/src/modules/payments',
+      '@shared': '/src/shared',
+      '@auth': '/src/modules/auth',
+      '@cfdi': '/src/modules/cfdi',
+      '@payments': '/src/modules/payments',
       '@payroll': '/src/modules/payroll',
+      '@infra': '/src/infraestructure',
     },
   },
 });

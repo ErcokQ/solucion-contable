@@ -28,6 +28,7 @@ module.exports = {
     '.husky',
     'docs/**',
     '.eslintrc.js',
+    'vite.config.ts',
   ],
   settings: {
     'import/resolver': {
