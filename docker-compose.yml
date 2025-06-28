@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scre_api
+    env_file: .env
+    ports:
+      - '3000:3000'
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - scre-net
+
+  mysql:
+    image: mysql:8.0
+    container_name: scre_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - '3306:3306'
+    networks:
+      - scre-net
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: scre_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    networks:
+      - scre-net
+
+volumes:
+  mysql_data:
+
+networks:
+  scre-net:
