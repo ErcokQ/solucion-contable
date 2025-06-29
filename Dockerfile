@@ -27,4 +27,4 @@ COPY docs ./docs
 COPY scripts/wait-for.sh /usr/local/bin/wait-for
 RUN chmod +x /usr/local/bin/wait-for
 
-CMD ["sh", "-c", "wait-for mysql:3306 -- npx typeorm migration:run -d dist/infraestructure/orm/DataSource.js && node dist/app.js "]
+CMD ["sh", "-c", "wait-for mysql:3306 -- npx typeorm migration:run -d dist/infraestructure/orm/data-source.js && node dist/app.js "]
