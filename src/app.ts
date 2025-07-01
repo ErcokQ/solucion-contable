@@ -1,8 +1,10 @@
 import 'dotenv/config';
 import express, { Request, Response } from 'express';
-import { healthRouter } from './routes/health.router';
-import { docsRouter } from './routes/docs.router';
-import { ApiError } from './shared/error/ApiError';
+import { healthRouter } from 'routes/health.router';
+import { docsRouter } from 'routes/docs.router';
+import { ApiError } from '@shared/error/ApiError';
+import arenaRouter from '@infra/http/arena.router';
+
 // import { container } from './shared/container';   // inyecta dependencias (no usado aún)
 
 const app = express();
@@ -15,6 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 // Rutas base
 app.use(healthRouter);
 app.use(docsRouter);
+app.use(arenaRouter);
 
 // 404 para rutas no encontradas
 app.use((_req, _res, next) => next(new ApiError(404, 'Ruta Inexistente')));
