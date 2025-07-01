@@ -30,9 +30,11 @@
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@types/express": "^5.0.3",
+    "@types/express-serve-static-core": "^5.0.6",
     "@types/ioredis": "^4.28.10",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.4",
+    "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/yamljs": "^0.2.34",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
@@ -49,6 +51,7 @@
     "lint-staged": "^16.1.2",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.1",
+    "supertest": "^7.1.1",
     "swagger-ui-watcher": "^2.1.14",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
@@ -67,6 +70,9 @@
     "swagger-ui-express": "^5.0.1",
     "tsyringe": "^4.10.0",
     "typeorm": "^0.3.25",
+    "uuid": "^11.1.0",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0",
     "yamljs": "^0.3.0"
   }
 }

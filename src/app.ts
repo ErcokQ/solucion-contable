@@ -4,6 +4,7 @@ import { healthRouter } from 'routes/health.router';
 import { docsRouter } from 'routes/docs.router';
 import { ApiError } from '@shared/error/ApiError';
 import arenaRouter from '@infra/http/arena.router';
+import { requestLogger } from '@infra/http/logger.middleware';
 
 // import { container } from './shared/container';   // inyecta dependencias (no usado aún)
 
@@ -13,6 +14,9 @@ const PORT = process.env.PORT || 4000;
 // Middlewares globales
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Middleware de registro de solicitudes
+app.use(requestLogger);
 
 // Rutas base
 app.use(healthRouter);
