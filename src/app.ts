@@ -1,15 +1,14 @@
-import 'dotenv/config';
+import { config } from '@shared/config';
 import express, { Request, Response } from 'express';
 import { healthRouter } from 'routes/health.router';
 import { docsRouter } from 'routes/docs.router';
 import { ApiError } from '@shared/error/ApiError';
-import arenaRouter from '@infra/http/arena.router';
 import { requestLogger } from '@infra/http/logger.middleware';
 
 // import { container } from './shared/container';   // inyecta dependencias (no usado aún)
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = config.PORT;
 
 // Middlewares globales
 app.use(express.json());
@@ -21,8 +20,6 @@ app.use(requestLogger);
 // Rutas base
 app.use(healthRouter);
 app.use(docsRouter);
-app.use(arenaRouter);
-
 // 404 para rutas no encontradas
 app.use((_req, _res, next) => next(new ApiError(404, 'Ruta Inexistente')));
 

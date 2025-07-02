@@ -9,6 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:smoke": "vitest run --config vitest.smoke.config.ts",
     "prepare": "husky",
     "format": "prettier --write \"src/**/*.{ts,tsx,md,json}\"",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
@@ -40,7 +41,6 @@
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
     "@vitest/coverage-istanbul": "^3.2.4",
-    "bull-arena": "^4.5.1",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.5",
     "eslint-import-resolver-typescript": "^4.4.4",
@@ -73,6 +73,7 @@
     "uuid": "^11.1.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "yamljs": "^0.3.0"
+    "yamljs": "^0.3.0",
+    "zod": "^3.25.67"
   }
 }

@@ -22,7 +22,7 @@ ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
-COPY --from=builder home/app/dist ./dist
+COPY --from=builder /home/app/dist ./dist
 COPY docs ./docs 
 COPY scripts/wait-for.sh /usr/local/bin/wait-for
 RUN chmod +x /usr/local/bin/wait-for

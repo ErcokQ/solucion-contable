@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   api:
     build:
@@ -22,7 +20,7 @@ services:
       - redis
     env_file: .env
     networks:
-      - scre-net]
+      - scre-net
 
   mysql:
     image: mysql:8.0
