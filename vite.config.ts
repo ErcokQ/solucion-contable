@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: true, // describe/it sin importar
     environment: 'node', // entorno Node
-    include: ['src/**/*.spec.ts'],
+    include: ['src/**/*.spec.ts', '!src/test/smoke/**/*.spec.ts'],
     coverage: {
       reporter: ['text', 'html'],
       provider: 'istanbul',

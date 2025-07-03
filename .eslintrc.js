@@ -29,6 +29,9 @@ module.exports = {
     'docs/**',
     '.eslintrc.js',
     'vite.config.ts',
+    'test/**/*.ts',
+    'jest.config.js',
+    'vitest.smoke.config.ts',
   ],
   settings: {
     'import/resolver': {
