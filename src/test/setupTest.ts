@@ -1,0 +1,9 @@
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'test_access_32_chars______________';
+process.env.JWT_REFRESH_SECRET = 'test_refresh_32_chars________';
+process.env.DB_HOST = 'dummy';
+process.env.DB_USER = 'dummy';
+process.env.DB_PASS = 'dummy';
+process.env.DB_NAME = 'dummy';
+process.env.DB_ROOT_PASS = 'dummy';
+process.env.DB_PORT = '3306';

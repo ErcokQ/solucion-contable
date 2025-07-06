@@ -15,8 +15,14 @@ export const AppDataSource = new DataSource({
   logging: false,
   entities:
     process.env.NODE_ENV === 'development'
-      ? ['src/modules/**/domain/entities/*.ts']
-      : ['dist/modules/**/domain/entities/*.js'],
+      ? [
+          'src/modules/**/domain/entities/*.ts',
+          'src/infraestructure/orm/entities/*.ts',
+        ]
+      : [
+          'dist/modules/**/domain/entities/*.js',
+          'dist/infraestructure/orm/entities/*.ts',
+        ],
   migrations:
     process.env.NODE_ENV === 'development'
       ? ['src/infraestructure/orm/migrations/*.ts']

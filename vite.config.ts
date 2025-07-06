@@ -24,6 +24,7 @@ export default defineConfig({
         '.eslintrc.js',
       ],
     },
+    setupFiles: 'src/test/setupTest.ts',
   },
   resolve: {
     alias: {

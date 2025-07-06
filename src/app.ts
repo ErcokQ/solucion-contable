@@ -1,38 +1,35 @@
+// src/app.ts
 import { config } from '@shared/config';
-import express, { Request, Response } from 'express';
+import express from 'express';
+
+import { requestLogger } from '@infra/http/logger.middleware';
 import { healthRouter } from 'routes/health.router';
 import { docsRouter } from 'routes/docs.router';
-import { ApiError } from '@shared/error/ApiError';
-import { requestLogger } from '@infra/http/logger.middleware';
 
-// import { container } from './shared/container';   // inyecta dependencias (no usado aún)
+import { ApiError } from '@shared/error/ApiError';
+import { errorHandler } from '@shared/middlewares/error-handler.middleware';
 
 const app = express();
 const PORT = config.PORT;
 
-// Middlewares globales
+// ---------- Middlewares globales ----------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware de registro de solicitudes
+// Registro de solicitudes (debe ir pronto para loggear todo)
 app.use(requestLogger);
 
-// Rutas base
+// ---------- Rutas ----------
 app.use(healthRouter);
 app.use(docsRouter);
-// 404 para rutas no encontradas
-app.use((_req, _res, next) => next(new ApiError(404, 'Ruta Inexistente')));
 
-// Manejador de errores
-app.use((err: Error, _req: Request, res: Response) => {
-  const status = err instanceof ApiError ? err.status : 500;
-  res.status(status).json({
-    error: {
-      message: err.message || 'Internal Server Error',
-    },
-  });
-});
+// ---------- 404 ----------
+app.use((_req, _res, next) => next(new ApiError(404, 'ROUTE_NOT_FOUND')));
 
+// ---------- Manejador de errores (SIEMPRE el último) ----------
+app.use(errorHandler);
+
+// ---------- Arranque ----------
 app.listen(PORT, () => {
   console.log(`🚀  API escuchando en http://localhost:${PORT}`);
   console.log(`📑  Swagger UI en  http://localhost:${PORT}/docs`);
