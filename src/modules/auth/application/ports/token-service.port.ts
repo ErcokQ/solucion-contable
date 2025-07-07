@@ -19,4 +19,10 @@ export interface TokenServicePort {
    * @param opts Opciones de firma del token de refresco.
    */
   signRefresh(payload: object, opts?: SignOptions): string;
+  /**
+   *verifica la validez del token refrescado
+   * @param token token dado al usuario
+   * @returns: Paylaod del token refrescado
+   */
+  verifyRefresh<T = unknown>(token: string): T;
 }

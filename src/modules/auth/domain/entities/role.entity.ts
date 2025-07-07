@@ -14,7 +14,7 @@ import { Permission } from './permission.entity';
 export class Role {
   @PrimaryGeneratedColumn()
   id!: number;
-  @Column({ length: 50, unique: true })
+  @Column('varchar', { length: 50, unique: true })
   name!: string;
   @CreateDateColumn({ name: 'created_at' }) createAt!: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updateAt!: Date;

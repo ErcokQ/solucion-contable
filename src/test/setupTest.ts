@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test_access_32_chars______________';
 process.env.JWT_REFRESH_SECRET = 'test_refresh_32_chars________';
