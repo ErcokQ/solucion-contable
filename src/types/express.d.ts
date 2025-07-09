@@ -6,6 +6,7 @@ declare global {
     interface Request {
       requestId: string;
       userId?: number;
+      userRoles?: string[];
     }
     interface Response {
       locals: { log: typeof logger };

@@ -11,7 +11,7 @@ import { ApiError } from '@shared/error/ApiError';
 export class RefreshUseCase {
   constructor(
     @inject('UserRepo') private readonly users: UserRepositoryPort,
-    @inject('TokenService') private readonly jwt: TokenServicePort,
+    @inject('TokenServicePort') private readonly jwt: TokenServicePort,
   ) {}
 
   async execute(dto: RefreshDto) {

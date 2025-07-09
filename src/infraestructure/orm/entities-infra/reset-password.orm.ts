@@ -6,7 +6,7 @@ import {
   JoinColumn,
   CreateDateColumn,
 } from 'typeorm';
-import { User } from '@/modules/auth/domain/entities/user.entity';
+import { User } from '@auth/domain/entities/user.entity';
 
 @Entity({ name: 'reset_passwords' })
 export class ResetPasswordOrm {

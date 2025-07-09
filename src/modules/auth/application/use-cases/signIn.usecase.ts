@@ -9,8 +9,8 @@ import { ApiError } from '@shared/error/ApiError';
 export class SignInUseCase {
   constructor(
     @inject('UserRepo') private users: UserRepositoryPort,
-    @inject('HashService') private hash: HashServicePort,
-    @inject('TokenService') private jwt: TokenServicePort,
+    @inject('HashServicePort') private hash: HashServicePort,
+    @inject('TokenServicePort') private jwt: TokenServicePort,
   ) {}
 
   async execute(dto: SignInDto) {
@@ -20,7 +20,10 @@ export class SignInUseCase {
     if (!OkPwd) throw new ApiError(401, 'INVALID_CREDENTIALS');
     if (!user.activo) throw new ApiError(403, 'USER_DISABLED');
 
-    const accessToken = this.jwt.sign({ sub: user.id });
+    const accessToken = this.jwt.sign({
+      sub: user.id,
+      roles: user.roles.map((r) => r.name),
+    });
     const refreshToken = this.jwt.signRefresh({ sub: user.id });
 
     return {

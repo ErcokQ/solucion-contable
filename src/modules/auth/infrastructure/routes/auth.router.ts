@@ -1,6 +1,7 @@
 // src/modules/auth/infraestructure/routes/auth.router.ts
 import { Router } from 'express';
 import { container } from '@shared/container';
+import { jwtAuth } from '../middlewares/jwt-auth.middleware';
 
 import {
   SignUpDtoSchema,
@@ -36,12 +37,13 @@ authRouter.post('/auth/signin', async (req, res, next) => {
     const out = await container.resolve(SignInUseCase).execute(dto);
     res.status(200).json(out);
   } catch (e) {
+    console.log(e);
     next(e);
   }
 });
 
 /* Refresh */
-authRouter.post('/auth/refresh', async (req, res, next) => {
+authRouter.post('/auth/refresh', jwtAuth(), async (req, res, next) => {
   try {
     const dto = RefreshDtoSchema.parse(req.body);
     const out = await container.resolve(RefreshUseCase).execute(dto);
@@ -52,7 +54,7 @@ authRouter.post('/auth/refresh', async (req, res, next) => {
 });
 
 /* Logout */
-authRouter.post('/auth/logout', async (req, res, next) => {
+authRouter.post('/auth/logout', jwtAuth(), async (req, res, next) => {
   try {
     const dto = LogoutDtoSchema.parse(req.body);
     await container.resolve(LogoutUseCase).execute(dto);

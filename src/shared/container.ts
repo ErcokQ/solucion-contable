@@ -12,6 +12,8 @@ import { SignupUseCase } from '@auth/application/use-cases/signup.usecase';
 import { RefreshUseCase } from '@auth/application/use-cases/refresh.usecase';
 import { LogoutUseCase } from '@auth/application/use-cases/logout.usecase';
 import { TypeOrmUserRepository } from '@auth/infrastructure/repositories/typeorm-user.repository';
+import { RoleRepositoryPort } from '@auth/application/ports/role-repository.port';
+import { TypeOrmRoleRepository } from '@auth/infrastructure/repositories/typeorm-role.repository';
 
 container.register<EventBus>('EventBus', {
   useClass: InMemoryEventBus,
@@ -28,6 +30,10 @@ container.registerSingleton<TokenServicePort>(
 container.registerSingleton<UserRepositoryPort>(
   'UserRepo',
   TypeOrmUserRepository,
+);
+container.registerSingleton<RoleRepositoryPort>(
+  'RoleRepo',
+  TypeOrmRoleRepository,
 );
 
 /**Registro casos de uso Auth */
