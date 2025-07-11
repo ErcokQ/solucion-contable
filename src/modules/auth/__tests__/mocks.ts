@@ -3,6 +3,12 @@ import { vi, Mocked } from 'vitest';
 import { UserRepositoryPort } from '@auth/application/ports/user-repository.port';
 import { HashServicePort } from '@auth/application/ports/hash-service.port';
 import { TokenServicePort } from '@auth/application/ports/token-service.port';
+import { Role } from '@auth/domain/entities/role.entity';
+
+export const fakeRoleUser: Role = Object.assign(new Role(), {
+  id: 2,
+  name: 'user',
+});
 
 export const fakeUser = {
   id: 1,
@@ -32,3 +38,7 @@ export const mockJwt = () =>
     verifyRefresh: vi.fn(),
     verify: vi.fn(),
   }) satisfies TokenServicePort;
+
+export const mockRoleRepo = () => ({
+  findByName: vi.fn().mockResolvedValue(fakeRoleUser),
+});

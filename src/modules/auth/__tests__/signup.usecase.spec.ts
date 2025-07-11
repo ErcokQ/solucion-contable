@@ -2,13 +2,14 @@ import 'reflect-metadata';
 import { describe, it, expect } from 'vitest';
 import { SignupUseCase } from '@auth/application/use-cases/signup.usecase';
 import { ApiError } from '@shared/error/ApiError';
-import { mockRepo, mockHash, mockJwt } from './mocks';
+import { mockRepo, mockHash, mockJwt, mockRoleRepo } from './mocks';
 
 describe('SignupUseCase', () => {
   const repo = mockRepo();
   const hash = mockHash();
   const jwt = mockJwt();
-  const uc = new SignupUseCase(repo, hash, jwt);
+  const rol = mockRoleRepo();
+  const uc = new SignupUseCase(repo, rol, hash, jwt);
 
   it('crea usuario y devuelve tokens', async () => {
     repo.existsByEmail.mockResolvedValue(false);
@@ -27,7 +28,10 @@ describe('SignupUseCase', () => {
     });
 
     expect(repo.save).toHaveBeenCalled();
-    expect(jwt.sign).toHaveBeenCalledWith({ sub: expect.any(Number) });
+    expect(jwt.sign).toHaveBeenCalledWith({
+      sub: expect.any(Number),
+      roles: ['user'],
+    });
   });
 
   it('lanza EMAIL_ALREADY_EXISTS', async () => {

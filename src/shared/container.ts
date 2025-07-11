@@ -14,6 +14,16 @@ import { LogoutUseCase } from '@auth/application/use-cases/logout.usecase';
 import { TypeOrmUserRepository } from '@auth/infrastructure/repositories/typeorm-user.repository';
 import { RoleRepositoryPort } from '@auth/application/ports/role-repository.port';
 import { TypeOrmRoleRepository } from '@auth/infrastructure/repositories/typeorm-role.repository';
+/**CfdiRegistro*/
+import { XmlValidatorPort } from '@cfdi/application/ports/xml-validator.port';
+import { XsdValidatorService } from '@cfdi/infrastructure/services/xsd-validator.service';
+import { FileStoragePort } from '@cfdi/application/ports/storage.port';
+import { LocalDiskStorageService } from '@cfdi/infrastructure/services/local-disk-storage.service';
+import { QueueProducerPort } from '@cfdi/application/ports/queue-producer.port';
+import { BullCfdiProducer } from '@cfdi/infrastructure/services/bull-cfdi-producer.service';
+import { ImportCfdiUseCase } from '@cfdi/application/use-cases/import-cfdi.usecase';
+import { TypeOrmCfdiRepository } from '@cfdi/infrastructure/repositories/typeorm-cfdi.repository';
+import { CfdiRepositoryPort } from '@cfdi/application/ports/cfdi-repository.port';
 
 container.register<EventBus>('EventBus', {
   useClass: InMemoryEventBus,
@@ -34,6 +44,21 @@ container.registerSingleton<UserRepositoryPort>(
 container.registerSingleton<RoleRepositoryPort>(
   'RoleRepo',
   TypeOrmRoleRepository,
+);
+/**CfdiRegistroPuertos */
+container.registerSingleton<XmlValidatorPort>(
+  'XmlValidator',
+  XsdValidatorService,
+);
+container.registerSingleton<FileStoragePort>(
+  'FileStorage',
+  LocalDiskStorageService,
+);
+container.registerSingleton<QueueProducerPort>('CfdiQueue', BullCfdiProducer);
+container.registerSingleton(ImportCfdiUseCase);
+container.registerSingleton<CfdiRepositoryPort>(
+  'CfdiRepo',
+  TypeOrmCfdiRepository,
 );
 
 /**Registro casos de uso Auth */

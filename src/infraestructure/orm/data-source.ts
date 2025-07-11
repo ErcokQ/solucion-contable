@@ -21,7 +21,7 @@ export const AppDataSource = new DataSource({
         ]
       : [
           'dist/modules/**/domain/entities/*.js',
-          'dist/infraestructure/orm/entities/*.ts',
+          'dist/infraestructure/orm/entities/*.js',
         ],
   migrations:
     process.env.NODE_ENV === 'development'

@@ -44,3 +44,6 @@ Thumbs.db
 # ─────────────── Misc artefacts ―──────────────
 *.tgz
 *.orig
+
+# ─────────────── Storage ―──────────────
+src/storage
