@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /**
- * Estructura del dto apra recepcion xml
+ * Estructura del dto para recepcion xml
  */
 export const UploadCfdiDtoSchema = z.object({
   /** Buffer si llega multipart; si no, xmlBase64 debe existir */

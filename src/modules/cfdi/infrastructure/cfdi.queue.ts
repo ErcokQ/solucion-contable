@@ -3,6 +3,8 @@ import { QueueProvider } from '@infra/queue/queue.provider';
 export interface CfdiJobData {
   cfdiId: number; // PK en la BD
   path: string; // xmlPath donde quedó guardado
+  uuid?: string;
+  originalFilename?: string;
 }
 
 export const cfdiQueue = QueueProvider.buildQueue<CfdiJobData>(

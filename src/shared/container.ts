@@ -24,6 +24,12 @@ import { BullCfdiProducer } from '@cfdi/infrastructure/services/bull-cfdi-produc
 import { ImportCfdiUseCase } from '@cfdi/application/use-cases/import-cfdi.usecase';
 import { TypeOrmCfdiRepository } from '@cfdi/infrastructure/repositories/typeorm-cfdi.repository';
 import { CfdiRepositoryPort } from '@cfdi/application/ports/cfdi-repository.port';
+import { BulkImportCfdiUseCase } from '@cfdi/application/use-cases/bulk-import-cfdi.usecase';
+import { ListCfdiJobsUseCase } from '@cfdi/application/use-cases/list-cfdi-jobs.usecase';
+import { ListCfdiUseCase } from '@cfdi/application/use-cases/list-cfdi.usecase';
+import { GetCfdiDetailUseCase } from '@cfdi/application/use-cases/get-cfdi-detail.usecase';
+import { GetCfdiXmlUseCase } from '@cfdi/application/use-cases/get-cfdi-xml.usecase';
+import { DeleteCfdiUseCase } from '@cfdi/application/use-cases/delete-cfdi.usecase';
 
 container.register<EventBus>('EventBus', {
   useClass: InMemoryEventBus,
@@ -56,6 +62,12 @@ container.registerSingleton<FileStoragePort>(
 );
 container.registerSingleton<QueueProducerPort>('CfdiQueue', BullCfdiProducer);
 container.registerSingleton(ImportCfdiUseCase);
+container.registerSingleton(BulkImportCfdiUseCase);
+container.registerSingleton(ListCfdiJobsUseCase);
+container.registerSingleton(ListCfdiUseCase);
+container.registerSingleton(GetCfdiDetailUseCase);
+container.registerSingleton(GetCfdiXmlUseCase);
+container.registerSingleton(DeleteCfdiUseCase);
 container.registerSingleton<CfdiRepositoryPort>(
   'CfdiRepo',
   TypeOrmCfdiRepository,

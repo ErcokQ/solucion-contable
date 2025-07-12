@@ -4,9 +4,11 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
 
 import { User } from '@auth/domain/entities/user.entity';
+import { CfdiConcept } from './cfdi-concept.entity';
 
 @Entity({ name: 'cfdi_headers' })
 export class CfdiHeader {
@@ -72,6 +74,9 @@ export class CfdiHeader {
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   user!: User;
+
+  @OneToMany(() => CfdiConcept, (c) => c.cfdiHeader, { cascade: true })
+  concepts!: CfdiConcept[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

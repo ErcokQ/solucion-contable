@@ -84,6 +84,7 @@ export class ImportCfdiUseCase {
     await this.queue.addJob('process-cfdi', {
       cfdiId: header.id,
       path: storedPath,
+      uuid: uuid,
     });
 
     return { id: header.id, uuid };
