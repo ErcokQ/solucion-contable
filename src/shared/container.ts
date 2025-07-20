@@ -42,6 +42,8 @@ import { ListPayrollUseCase } from '@payroll/application/use-cases/list-payroll.
 import { GetPayrollDetailUseCase } from '@payroll/application/use-cases/get-payroll-detail.usecase';
 import { TypeOrmPayrollRepository } from '@payroll/infrastructure/repositories/typeorm-payroll.repository';
 import { PayrollRepositoryPort } from '@payroll/application/ports/payroll-repository.port';
+import { ProductKeyRepositoryPort } from '@auth/application/ports/product-key-repository.port';
+import { TypeOrmProductKeyRepository } from '@auth/infrastructure/repositories/typeorm-product-key.repository';
 
 container.registerSingleton<EventBus>('EventBus', InMemoryEventBus);
 
@@ -60,6 +62,10 @@ container.registerSingleton<UserRepositoryPort>(
 container.registerSingleton<RoleRepositoryPort>(
   'RoleRepo',
   TypeOrmRoleRepository,
+);
+container.registerSingleton<ProductKeyRepositoryPort>(
+  'ProductKeyRepo',
+  TypeOrmProductKeyRepository,
 );
 /**CfdiRegistroPuertos */
 container.registerSingleton<XmlValidatorPort>(

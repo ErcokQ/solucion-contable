@@ -21,7 +21,8 @@
     "mig:generate": "npm run typeorm -- migration:generate -d ./src/infraestructure/orm/data-source.ts",
     "mig:create": "npm run typeorm -- migration:create -d ./src/infraestructure/orm/data-source.ts",
     "mig:run": "npm run typeorm -- migration:run      -d ./src/infraestructure/orm/data-source.ts",
-    "mig:revert": "npm run typeorm -- migration:revert   -d ./src/infraestructure/orm/data-source.ts"
+    "mig:revert": "npm run typeorm -- migration:revert   -d ./src/infraestructure/orm/data-source.ts",
+    "seed:admin": "ts-node --require tsconfig-paths/register src/scripts/seed-admin.ts"
   },
   "keywords": [],
   "author": "",
