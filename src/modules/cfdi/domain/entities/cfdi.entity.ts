@@ -9,6 +9,8 @@ import {
 
 import { User } from '@auth/domain/entities/user.entity';
 import { CfdiConcept } from './cfdi-concept.entity';
+import { PaymentHeader } from '@payments/domain/entities/payment-header.entity';
+import { PayrollHeader } from '@payroll/domain/entities/payroll-header.entity';
 
 @Entity({ name: 'cfdi_headers' })
 export class CfdiHeader {
@@ -77,6 +79,12 @@ export class CfdiHeader {
 
   @OneToMany(() => CfdiConcept, (c) => c.cfdiHeader, { cascade: true })
   concepts!: CfdiConcept[];
+
+  @OneToMany(() => PaymentHeader, (p) => p.cfdiHeader)
+  payments!: PaymentHeader[];
+
+  @OneToMany(() => PayrollHeader, (p) => p.cfdiHeader)
+  payrolls!: PayrollHeader[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

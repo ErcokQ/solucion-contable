@@ -14,6 +14,8 @@ import { CfdiQueryDtoSchema } from '@cfdi/application/dto/cfdi-query.dto';
 import { GetCfdiDetailUseCase } from '@cfdi/application/use-cases/get-cfdi-detail.usecase';
 import { GetCfdiXmlUseCase } from '@cfdi/application/use-cases/get-cfdi-xml.usecase';
 import { DeleteCfdiUseCase } from '@cfdi/application/use-cases/delete-cfdi.usecase';
+import { ReportDiotDtoSchema } from '@cfdi/application/dto/report-diot.dto';
+import { GenerateDiotReportUseCase } from '@cfdi/application/use-cases/generate-diot-report.usecase';
 import { createReadStream } from 'fs';
 
 const upload = multer(); // almacena en memoria
@@ -127,6 +129,24 @@ cfdiRouter.delete('/cfdi/:uuid', jwtAuth(), async (req, res, next) => {
       message: 'CFDI eliminado correctamente',
       ...result,
     });
+  } catch (e) {
+    next(e);
+  }
+});
+
+cfdiRouter.get('/cfdi/report/diot', jwtAuth(), async (req, res, next) => {
+  try {
+    const dto = ReportDiotDtoSchema.parse(req.query);
+    const useCase = container.resolve(GenerateDiotReportUseCase);
+    const data = await useCase.execute(dto);
+
+    res.json(
+      data.map((row) => ({
+        ...row,
+        base: parseFloat(row.base),
+        importe: parseFloat(row.importe),
+      })),
+    );
   } catch (e) {
     next(e);
   }

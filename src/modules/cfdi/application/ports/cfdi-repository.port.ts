@@ -1,5 +1,6 @@
 import { CfdiHeader } from '@cfdi/domain/entities/cfdi.entity';
 import { CfdiQueryDto } from '../dto/cfdi-query.dto';
+import { ReportDiotDto } from '../dto/report-diot.dto';
 
 export interface CfdiRepositoryPort {
   existsByUuid(uuid: string): Promise<boolean>;
@@ -12,4 +13,13 @@ export interface CfdiRepositoryPort {
   findByUuidWithDetails(uuid: string): Promise<CfdiHeader>;
   getXmlPathByUuid(uuid: string): Promise<string>;
   deleteByUuid(uuid: string): Promise<void>;
+  getDiotReport(filters: ReportDiotDto): Promise<
+    {
+      rfcReceptor: string;
+      tipo: string;
+      impuesto: string;
+      base: string;
+      importe: string;
+    }[]
+  >;
 }

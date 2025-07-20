@@ -1,27 +1,21 @@
-// src/worker/index.ts
+/* worker/index.ts */
+
 import 'reflect-metadata';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env' });
 
-import { AppDataSource } from '@infra/orm/data-source'; // <-- importa tu data source
-import '@infra/queue/queue.provider'; // inicializa Redis
-import '@cfdi/infrastructure/cfdi.processor'; // arranca el Worker
+import { AppDataSource } from '@infra/orm/data-source';
+import '@infra/queue/queue.provider';
+
+import '@cfdi/infrastructure/cfdi.processor'; // ✅ worker CFDI
+import '@payments/infrastructure/payment.processor'; // ✅ worker Payments
+import '@payments/infrastructure/payments.bootstrap';
+import '@payroll/infrastructure/payroll.processor'; // ✅ worker Payroll
+import '@payroll/infrastructure/payroll.bootstrap';
 
 async function bootstrap() {
-  console.log('[worker] Inicializando conexión a BD…');
+  console.log('[worker] Inicializando BD…');
   await AppDataSource.initialize();
-  console.log('[worker] Conexión a BD establecida');
-  console.log('[worker] Arrancando workers…');
+  console.log('[worker] BD OK, workers listos');
 }
-
-bootstrap().catch((err) => {
-  console.error('[worker] Error arrancando:', err);
-  process.exit(1);
-});
-
-// Opcional: manejo de cierre limpio
-process.on('SIGTERM', async () => {
-  console.log('[worker] Recibida señal SIGTERM, cerrando BD…');
-  await AppDataSource.destroy();
-  process.exit(0);
-});
+bootstrap();

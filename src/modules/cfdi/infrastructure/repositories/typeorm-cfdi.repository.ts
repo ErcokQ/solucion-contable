@@ -7,6 +7,7 @@ import { CfdiRepositoryPort } from '@cfdi/application/ports/cfdi-repository.port
 import { AppDataSource } from '@infra/orm/data-source';
 import { CfdiQueryDto } from '@cfdi/application/dto/cfdi-query.dto';
 import { ApiError } from '@shared/error/ApiError';
+import { ReportDiotDto } from '@cfdi/application/dto/report-diot.dto';
 
 @injectable()
 export class TypeOrmCfdiRepository implements CfdiRepositoryPort {
@@ -130,5 +131,28 @@ export class TypeOrmCfdiRepository implements CfdiRepositoryPort {
 
     // 2️⃣ Borrar en base
     await this.repo.delete({ uuid });
+  }
+
+  async getDiotReport({ fechaDesde, fechaHasta }: ReportDiotDto) {
+    const qb = this.repo
+      .createQueryBuilder('cfdi')
+      .innerJoin('cfdi.concepts', 'concept')
+      .innerJoin('concept.taxes', 'tax')
+      .select([
+        'cfdi.rfcReceptor AS rfcReceptor',
+        'tax.tipo AS tipo',
+        'tax.impuesto AS impuesto',
+        'SUM(tax.base) AS base',
+        'SUM(tax.importe) AS importe',
+      ])
+      .where('cfdi.fecha BETWEEN :desde AND :hasta', {
+        desde: fechaDesde,
+        hasta: fechaHasta,
+      })
+      .groupBy('cfdi.rfcReceptor')
+      .addGroupBy('tax.tipo')
+      .addGroupBy('tax.impuesto');
+
+    return qb.getRawMany();
   }
 }

@@ -9,6 +9,8 @@ import { healthRouter } from 'routes/health.router';
 import { docsRouter } from 'routes/docs.router';
 import { authRouter } from '@auth/infrastructure/routes/auth.router';
 import { cfdiRouter } from '@cfdi/infrastructure/routes/cfdi.routes';
+import { paymentsRouter } from '@payments/infrastructure/routes/payments.routes';
+import { payrollRouter } from '@payroll/infrastructure/routes/payroll.routes';
 
 import { ApiError } from '@shared/error/ApiError';
 import { errorHandler } from '@shared/middlewares/error-handler.middleware';
@@ -32,6 +34,8 @@ app.use(healthRouter);
 app.use(docsRouter);
 app.use(base, authRouter); // /api/sc/v1/...
 app.use(base, cfdiRouter);
+app.use(base, paymentsRouter);
+app.use(base, payrollRouter);
 
 app.use((_req, _res, next) => next(new ApiError(404, 'ROUTE_NOT_FOUND')));
 app.use(errorHandler);

@@ -30,10 +30,20 @@ import { ListCfdiUseCase } from '@cfdi/application/use-cases/list-cfdi.usecase';
 import { GetCfdiDetailUseCase } from '@cfdi/application/use-cases/get-cfdi-detail.usecase';
 import { GetCfdiXmlUseCase } from '@cfdi/application/use-cases/get-cfdi-xml.usecase';
 import { DeleteCfdiUseCase } from '@cfdi/application/use-cases/delete-cfdi.usecase';
+import { GenerateDiotReportUseCase } from '@cfdi/application/use-cases/generate-diot-report.usecase';
+/**Complmento de pagos */
+import { PaymentRepositoryPort } from '@payments/application/ports/payment-repository.port';
+import { TypeOrmPaymentRepository } from '@payments/infrastructure/repositories/typeorm-payment.repository';
+import { ListPaymentsUseCase } from '@payments/application/use-cases/payments-list.use-case';
+import { GetPaymentDetailUseCase } from '@payments/application/use-cases/payments-detail.use-case';
 
-container.register<EventBus>('EventBus', {
-  useClass: InMemoryEventBus,
-});
+/**Complementos de nomina */
+import { ListPayrollUseCase } from '@payroll/application/use-cases/list-payroll.usecase';
+import { GetPayrollDetailUseCase } from '@payroll/application/use-cases/get-payroll-detail.usecase';
+import { TypeOrmPayrollRepository } from '@payroll/infrastructure/repositories/typeorm-payroll.repository';
+import { PayrollRepositoryPort } from '@payroll/application/ports/payroll-repository.port';
+
+container.registerSingleton<EventBus>('EventBus', InMemoryEventBus);
 
 container.registerSingleton<HashServicePort>(
   'HashServicePort',
@@ -68,10 +78,26 @@ container.registerSingleton(ListCfdiUseCase);
 container.registerSingleton(GetCfdiDetailUseCase);
 container.registerSingleton(GetCfdiXmlUseCase);
 container.registerSingleton(DeleteCfdiUseCase);
+container.registerSingleton(GenerateDiotReportUseCase);
 container.registerSingleton<CfdiRepositoryPort>(
   'CfdiRepo',
   TypeOrmCfdiRepository,
 );
+/**Registro de complemento de pagos */
+container.registerSingleton<PaymentRepositoryPort>(
+  'PaymentRepo',
+  TypeOrmPaymentRepository,
+);
+container.registerSingleton(ListPaymentsUseCase);
+container.registerSingleton(GetPaymentDetailUseCase);
+
+/**Complementos de nomina */
+container.registerSingleton<PayrollRepositoryPort>(
+  'PayrollRepo',
+  TypeOrmPayrollRepository,
+);
+container.registerSingleton(ListPayrollUseCase);
+container.registerSingleton(GetPayrollDetailUseCase);
 
 /**Registro casos de uso Auth */
 container.registerSingleton(SignInUseCase);

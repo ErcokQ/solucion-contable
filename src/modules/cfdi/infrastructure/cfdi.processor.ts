@@ -9,6 +9,9 @@ import { XMLParser } from 'fast-xml-parser';
 import { promises as fs } from 'node:fs';
 import { QueueProvider } from '@infra/queue/queue.provider';
 import type { DeepPartial } from 'typeorm';
+import crypto from 'node:crypto';
+import { container } from '@shared/container';
+import { EventBus } from '@shared/bus/EventBus';
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -101,6 +104,32 @@ export async function processCfdi(job: Job<CfdiJobData>) {
   await headerRepo.update(cfdiId, { status: 'PARSED' });
 
   console.log(`[processor] CFDI ${cfdiId} procesado, ruta ${path}`);
+
+  /* 5️⃣  Publicar evento CfdiProcessed */
+  const bus = container.resolve<EventBus>('EventBus');
+  const tipoComprobante = comp['@_TipoDeComprobante'];
+
+  /* Obtén header ya persistido para armar el payload */
+  const header = await headerRepo.findOneByOrFail({ id: cfdiId });
+
+  await bus.publish({
+    id: crypto.randomUUID(),
+    name: 'CfdiProcessed',
+    occurredOn: new Date(),
+    version: 1,
+    payload: {
+      uuid: header.uuid,
+      rfcEmisor: header.rfcEmisor,
+      rfcReceptor: header.rfcReceptor,
+      fecha: header.fecha,
+      total: header.total,
+      conceptos: conceptosArr.length,
+      tipo: tipoComprobante,
+    },
+    /* 👇  datos adicionales para el módulo Payments */
+    meta: { cfdiId, filePath: path },
+  });
+
   return { ok: true };
 }
 
