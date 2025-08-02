@@ -26,7 +26,7 @@ export class Role {
     eager: true,
   })
   @JoinTable({
-    name: 'role_permissions', // nombre de la tabla puente
+    name: 'role_permissions',
     joinColumn: { name: 'role_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'permission_id', referencedColumnName: 'id' },
   })

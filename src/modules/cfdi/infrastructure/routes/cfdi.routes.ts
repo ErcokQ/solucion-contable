@@ -134,6 +134,17 @@ cfdiRouter.delete('/cfdi/:uuid', jwtAuth(), async (req, res, next) => {
   }
 });
 
+cfdiRouter.delete('/cfdi', jwtAuth(), (req, res, next) => {
+  try {
+    throw new ApiError(405, 'DELETE_NOT_ALLOWED', {
+      message:
+        'No se permite eliminar múltiples CFDIs a través de este endpoint',
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
 cfdiRouter.get('/cfdi/report/diot', jwtAuth(), async (req, res, next) => {
   try {
     const dto = ReportDiotDtoSchema.parse(req.query);

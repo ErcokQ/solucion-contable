@@ -1,0 +1,108 @@
+<section class="space-y-6" *ngIf="!loading(); else cargando">
+  <!-- filtros rápidos -->
+  <div class="flex gap-3 items-end">
+    <label class="text-sm"
+      >Desde
+      <input
+        type="date"
+        class="border px-2 py-1 rounded text-sm"
+        [value]="desde()"
+        (input)="desde.set($any($event.target).value)"
+      />
+    </label>
+    <label class="text-sm"
+      >Hasta
+      <input
+        type="date"
+        class="border px-2 py-1 rounded text-sm"
+        [value]="hasta()"
+        (input)="hasta.set($any($event.target).value)"
+      />
+    </label>
+    <button class="bg-teal-600 text-white px-4 py-1 rounded" (click)="fetch()">
+      Actualizar
+    </button>
+  </div>
+
+  <!-- KPIs tarjetas -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+    <div class="bg-white shadow p-4 rounded-lg">
+      <p class="text-xs text-gray-500">CFDIs hoy</p>
+      <p class="text-2xl font-semibold">{{ kpi("cfdiToday")() }}</p>
+    </div>
+    <div class="bg-white shadow p-4 rounded-lg">
+      <p class="text-xs text-gray-500">CFDIs mes</p>
+      <p class="text-2xl font-semibold">{{ kpi("cfdiMonth")() }}</p>
+    </div>
+    <div class="bg-white shadow p-4 rounded-lg">
+      <p class="text-xs text-gray-500">Pagos hoy</p>
+      <p class="text-2xl font-semibold">{{ kpi("pagosToday")() }}</p>
+    </div>
+    <div class="bg-white shadow p-4 rounded-lg">
+      <p class="text-xs text-gray-500">Nóminas mes</p>
+      <p class="text-2xl font-semibold">{{ kpi("payrollMonth")() }}</p>
+    </div>
+  </div>
+
+  <!-- Gráficas simples → usa series para futuros charts JS -->
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="bg-white p-4 rounded-lg shadow">
+      <h3 class="text-sm font-medium mb-2">CFDI últimos 15 días</h3>
+      <ul class="text-xs space-y-1 max-h-40 overflow-y-auto">
+        @for (s of data()!.series.cfdiLast15; track s.date) {
+          <li>
+            <span class="inline-block w-24">{{ s.date | date: "dd/MM" }}</span>
+            <span class="font-semibold">{{ s.count }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+    <div class="bg-white p-4 rounded-lg shadow">
+      <h3 class="text-sm font-medium mb-2">Pagos últimos 15 días</h3>
+      <ul class="text-xs space-y-1 max-h-40 overflow-y-auto">
+        @for (s of data()!.series.pagosLast15; track s.date) {
+          <li>
+            <span class="inline-block w-24">{{ s.date | date: "dd/MM" }}</span>
+            <span class="font-semibold">{{ s.count }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+  </div>
+
+  <!-- Pendientes -->
+  <div class="bg-white p-4 rounded-lg shadow">
+    <h3 class="font-medium mb-2">Pendientes recientes</h3>
+    <table class="text-xs w-full">
+      <thead class="bg-gray-100 text-gray-600">
+        <tr>
+          <th class="px-2 py-1">Fecha</th>
+          <th class="px-2 py-1">Tipo</th>
+          <th class="px-2 py-1">Ref</th>
+          <th class="px-2 py-1">Mensaje</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of data()!.pendientes; track p.tipo + p.ref) {
+          <tr class="border-t hover:bg-gray-50">
+            <td class="px-2 py-1">{{ p.fecha | date: "dd/MM" }}</td>
+            <td class="px-2 py-1">{{ p.tipo }}</td>
+            <td class="px-2 py-1 font-mono text-[11px]">{{ p.ref }}</td>
+            <td class="px-2 py-1">{{ p.msg }}</td>
+          </tr>
+        }
+        @if (data()!.pendientes.length === 0) {
+          <tr>
+            <td colspan="4" class="text-center text-gray-400 py-3">
+              Sin pendientes
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<ng-template #cargando>
+  <p class="text-center py-10 text-gray-500">Cargando resumen…</p>
+</ng-template>

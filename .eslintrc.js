@@ -33,6 +33,8 @@ module.exports = {
     'test/**/*.ts',
     'jest.config.js',
     'vitest.smoke.config.ts',
+    'frontend/tailwind.config.js',
+    'frontend/*',
   ],
   settings: {
     'import/resolver': {

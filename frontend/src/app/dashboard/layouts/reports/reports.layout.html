@@ -1,0 +1,34 @@
+<section>
+  <!-- Pestañas -------------------------------------------------------->
+  <div class="flex gap-2 mb-4">
+    @for (t of tabs; track t.id) {
+      <button
+        class="px-4 py-1 rounded-t-lg border-b-2"
+        [class.bg-teal-600]="active() === t.id"
+        [class.text-white]="active() === t.id"
+        [class.border-teal-600]="active() === t.id"
+        [class.bg-gray-100]="active() !== t.id"
+        [class.text-gray-600]="active() !== t.id"
+        (click)="active.set(t.id)"
+      >
+        {{ t.label }}
+      </button>
+    }
+  </div>
+
+  <!-- Contenido ------------------------------------------------------->
+  <div class="bg-white rounded-lg shadow p-4">
+    @if (active() === "cfdi") {
+      <app-cfdi-report></app-cfdi-report>
+    }
+    @if (active() === "iva") {
+      <app-iva-report></app-iva-report>
+    }
+    @if (active() === "totales") {
+      <app-totales-rfc-report></app-totales-rfc-report>
+    }
+    @if (active() === "nomina") {
+      <app-payroll-report></app-payroll-report>
+    }
+  </div>
+</section>

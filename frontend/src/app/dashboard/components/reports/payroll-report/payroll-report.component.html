@@ -1,0 +1,98 @@
+<section class="space-y-6">
+  <!-- Filtros -->
+  <div class="flex flex-wrap gap-3 items-end">
+    <label class="text-sm">
+      Desde
+      <input
+        type="date"
+        class="border px-2 py-1 rounded text-sm"
+        [value]="fechaDesde()"
+        (input)="fechaDesde.set($any($event.target).value)"
+      />
+    </label>
+
+    <label class="text-sm">
+      Hasta
+      <input
+        type="date"
+        class="border px-2 py-1 rounded text-sm"
+        [value]="fechaHasta()"
+        (input)="fechaHasta.set($any($event.target).value)"
+      />
+    </label>
+
+    <input
+      placeholder="RFC emisor"
+      class="border px-2 py-1 rounded text-sm uppercase"
+      [value]="rfc()"
+      (input)="rfc.set($any($event.target).value.trim().toUpperCase())"
+    />
+
+    <button class="bg-teal-600 text-white px-4 py-1 rounded" (click)="fetch()">
+      Buscar
+    </button>
+
+    <button
+      class="bg-amber-500 text-white px-4 py-1 rounded flex items-center gap-1"
+      [disabled]="rows().length === 0"
+      (click)="exportXlsx()"
+    >
+      <!-- icono descarga … -->
+      XLSX
+    </button>
+  </div>
+
+  <!-- Tabla -->
+  <div class="overflow-x-auto rounded-lg shadow border bg-white">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-100 text-xs text-gray-600 text-left">
+        <tr>
+          <th class="px-3 py-2">UUID</th>
+          <th class="px-3 py-2">Fecha pago</th>
+          <th class="px-3 py-2">RFC Trabajador</th>
+          <th class="px-3 py-2 text-right">Días</th>
+          <th class="px-3 py-2 text-right">Percepciones</th>
+          <th class="px-3 py-2 text-right">Deducciones</th>
+          <th class="px-3 py-2 text-right">ISR</th>
+          <th class="px-3 py-2 text-right">Subsidio</th>
+          <th class="px-3 py-2 text-right">Neto</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="9" class="text-center py-4 text-gray-500">
+              Cargando…
+            </td>
+          </tr>
+        } @else if (rows().length === 0) {
+          <tr>
+            <td colspan="9" class="text-center py-4 text-gray-400">
+              Sin resultados
+            </td>
+          </tr>
+        } @else {
+          @for (r of rows(); track r.UUID) {
+            <tr class="border-t hover:bg-gray-50">
+              <td class="px-3 py-1 font-mono text-xs">{{ r.UUID }}</td>
+              <td class="px-3 py-1">{{ r.FechaPago | date: "dd/MM/yyyy" }}</td>
+              <td class="px-3 py-1">{{ r.RFC_Receptor }}</td>
+              <td class="px-3 py-1 text-right">{{ r.DiasPagados }}</td>
+              <td class="px-3 py-1 text-right">{{ r.Percepciones | money }}</td>
+              <td class="px-3 py-1 text-right">{{ r.Deducciones | money }}</td>
+              <td class="px-3 py-1 text-right">{{ r.ISR | money }}</td>
+              <td class="px-3 py-1 text-right">{{ r.Subsidio | money }}</td>
+              <td class="px-3 py-1 text-right font-semibold">
+                {{ r.Neto | money }}
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (error()) {
+    <p class="text-red-600 text-sm">{{ error() }}</p>
+  }
+</section>
