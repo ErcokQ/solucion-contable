@@ -45,6 +45,15 @@ import { PayrollRepositoryPort } from '@payroll/application/ports/payroll-reposi
 import { ProductKeyRepositoryPort } from '@auth/application/ports/product-key-repository.port';
 import { TypeOrmProductKeyRepository } from '@auth/infrastructure/repositories/typeorm-product-key.repository';
 
+/** Summary imports */
+import { SummaryRepositoryPort } from 'modules/summary/application/ports/summary-repository.port';
+import { TypeOrmSummaryRepository } from 'modules/summary/infrastructure/repositories/typeorm-summary.repository';
+
+/**Reports imports */
+import { ReportsRepositoryPort } from '@reports/application/ports/cfdi-report.port';
+import { TypeOrmReportsRepository } from '@reports/infrastructure/repositories/typeorm-reports.repository';
+import { GenerateIvaReportUseCase } from '@reports/application/use-cases/generate-iva-report.usecase';
+
 container.registerSingleton<EventBus>('EventBus', InMemoryEventBus);
 
 container.registerSingleton<HashServicePort>(
@@ -110,5 +119,22 @@ container.registerSingleton(SignInUseCase);
 container.registerSingleton(SignupUseCase);
 container.registerSingleton(RefreshUseCase);
 container.registerSingleton(LogoutUseCase);
+
+/** Summary */
+container.registerSingleton<SummaryRepositoryPort>(
+  'SummaryRepo',
+  TypeOrmSummaryRepository,
+);
+
+/** Reportes */
+container.registerSingleton(GenerateIvaReportUseCase);
+container.registerSingleton<ReportsRepositoryPort>(
+  'ReportsRepo',
+  TypeOrmReportsRepository,
+);
+container.registerSingleton<ReportsRepositoryPort>(
+  'ReportsRepo',
+  TypeOrmReportsRepository,
+);
 
 export { container };

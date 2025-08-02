@@ -19,10 +19,10 @@ export const payrollRouter = Router();
  */
 payrollRouter.get('/payrolls', jwtAuth(), async (req, res, next) => {
   try {
-    // ① Validar y transformar query-string → DTO
+    // Validar y transformar query-string → DTO
     const dto = PayrollQueryDtoSchema.parse(req.query);
 
-    // ② Ejecutar caso de uso
+    //  Ejecutar caso de uso
     const uc = container.resolve(ListPayrollUseCase);
     const result = await uc.execute(dto);
 

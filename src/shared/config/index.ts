@@ -14,6 +14,7 @@ const EnvSchema = z.object({
   /* App */
   PORT: z.coerce.number().default(3000),
   BASE_SERVER: z.string().default('api'),
+  URL_FRONTEND: z.string().default('http://localhost:4200'),
 
   /* MySQL */
   DB_HOST: z.string(),
