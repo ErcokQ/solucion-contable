@@ -1,3 +1,4 @@
+//@infra/bus/inMemoryEventBus.ts
 import { injectable } from 'tsyringe';
 import { EventEmitter } from 'node:events';
 import { DomainEvent } from '@shared/bus/DomainEvent';

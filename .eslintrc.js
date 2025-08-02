@@ -20,6 +20,7 @@ module.exports = {
   rules: {
     // añade reglas o sobreescribe aquí
     '@typescript-eslint/no-non-null-assertion': 'off',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
   },
   ignorePatterns: [
     'node_modules',
@@ -29,6 +30,9 @@ module.exports = {
     'docs/**',
     '.eslintrc.js',
     'vite.config.ts',
+    'test/**/*.ts',
+    'jest.config.js',
+    'vitest.smoke.config.ts',
   ],
   settings: {
     'import/resolver': {

@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-22.04
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: scrework
+          MYSQL_USER: devuser
+          MYSQL_PASSWORD: devpass
+          MYSQL_ROOT_PASSWORD: rootpass
+        ports: [3306:3306]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -udevuser -pdevpass"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+      redis:
+        image: redis
+        ports: [6379:6379]
+
+    env:
+      NODE_ENV: test # Zod cargará .env.test si existe
+      DB_HOST: 127.0.0.1
+      DB_USER: devuser
+      DB_PASS: devpass
+      DB_NAME: scrework
+      REDIS_HOST: 127.0.0.1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Lint + unit tests
+        run: |
+          npm run lint
+          npm run test
+
+      - name: Build TS & Docker image
+        run: |
+          npm run build
+          docker build -t scrework-api:ci .
+
+      - name: Launch stack for smoke tests
+        run: |
+          docker run -d --network host --name api   scrework-api:ci   sh -c "node dist/app.js"
+          docker run -d --network host --name worker scrework-api:ci node dist/workers/index.js
+          # espera a que /health responda
+          for i in {1..20}; do curl -fs http://localhost:3000/health && exit 0; sleep 3; done; exit 1
+
+      - name: Smoke tests
+        run: npm run test:smoke

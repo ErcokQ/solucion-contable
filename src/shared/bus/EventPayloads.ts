@@ -51,6 +51,7 @@ export interface EventPayloads {
     fecha: Date;
     total: number;
     conceptos: number; // rows insertadas en CFDI_CONCEPTS
+    tipo: 'I' | 'E' | 'P' | 'N';
   };
   /** Error al procesar el XML */
   CfdiProcessingFailed: {

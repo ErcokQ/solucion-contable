@@ -1,35 +1,46 @@
-import 'dotenv/config';
-import express, { Request, Response } from 'express';
-import { healthRouter } from './routes/health.router';
-import { docsRouter } from './routes/docs.router';
-import { ApiError } from './shared/error/ApiError';
-// import { container } from './shared/container';   // inyecta dependencias (no usado aún)
+// src/app.ts
+import 'reflect-metadata';
+import { config } from '@shared/config';
+import express from 'express';
+import { AppDataSource } from '@infra/orm/data-source';
 
+import { requestLogger } from '@infra/http/logger.middleware';
+import { healthRouter } from 'routes/health.router';
+import { docsRouter } from 'routes/docs.router';
+import { authRouter } from '@auth/infrastructure/routes/auth.router';
+import { cfdiRouter } from '@cfdi/infrastructure/routes/cfdi.routes';
+import { paymentsRouter } from '@payments/infrastructure/routes/payments.routes';
+import { payrollRouter } from '@payroll/infrastructure/routes/payroll.routes';
+
+import { ApiError } from '@shared/error/ApiError';
+import { errorHandler } from '@shared/middlewares/error-handler.middleware';
+
+(async () => {
+  /* 1️⃣  Conecta a la BD — debe hacerse una sola vez */
+  await AppDataSource.initialize();
+  console.log('📦  Data Source inicializado');
+})();
+
+/* 2️⃣  Configura Express **después** */
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = config.PORT;
+const base = config.BASE_SERVER;
 
-// Middlewares globales
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(requestLogger);
 
-// Rutas base
 app.use(healthRouter);
 app.use(docsRouter);
+app.use(base, authRouter); // /api/sc/v1/...
+app.use(base, cfdiRouter);
+app.use(base, paymentsRouter);
+app.use(base, payrollRouter);
 
-// 404 para rutas no encontradas
-app.use((_req, _res, next) => next(new ApiError(404, 'Ruta Inexistente')));
-
-// Manejador de errores
-app.use((err: Error, _req: Request, res: Response) => {
-  const status = err instanceof ApiError ? err.status : 500;
-  res.status(status).json({
-    error: {
-      message: err.message || 'Internal Server Error',
-    },
-  });
-});
+app.use((_req, _res, next) => next(new ApiError(404, 'ROUTE_NOT_FOUND')));
+app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`🚀  API escuchando en http://localhost:${PORT}`);
-  console.log(`📑  Swagger UI en  http://localhost:${PORT}/docs`);
+  console.log(`🚀  API en http://localhost:${PORT}${base}`);
+  console.log(`📑  Swagger http://localhost:${PORT}/docs`);
 });
