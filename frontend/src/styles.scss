@@ -1,0 +1,39 @@
+/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Ubuntu";
+  src:
+    url("./assets/fonts/ubuntu/Ubuntu-Regular.ttf") format("truetype"),
+    url("./assets/fonts/ubuntu/Ubuntu-Medium.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Ubuntu";
+  src:
+    url("./assets/fonts/ubuntu/Ubuntu-Bold.ttf") format("truetype"),
+    url("./assets/fonts/ubuntu/Ubuntu-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Opcional: define una clase global */
+.font-ubuntu {
+  font-family: "Ubuntu", ui-sans-serif, system-ui;
+}
+
+@layer base {
+  html {
+    font-family: "Ubuntu", ui-sans-serif, system-ui;
+  }
+}
+
+@layer base {
+  input::placeholder {
+    @apply text-gray-600 opacity-55; // tono oscuro
+  }
+}

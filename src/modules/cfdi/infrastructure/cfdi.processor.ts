@@ -12,11 +12,15 @@ import type { DeepPartial } from 'typeorm';
 import crypto from 'node:crypto';
 import { container } from '@shared/container';
 import { EventBus } from '@shared/bus/EventBus';
+import { CfdiReplacement } from '@cfdi/domain/entities/cfdi-replacement.entity';
 
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
 });
+
+const SUBSTITUTION_RELATIONS = ['04'] as const;
+type SubstitutionRelation = (typeof SUBSTITUTION_RELATIONS)[number];
 /**
  *
  * @param job Procesa el trabajo de colas del cfdi
@@ -31,9 +35,34 @@ export async function processCfdi(job: Job<CfdiJobData>) {
   const headerRepo = AppDataSource.getRepository(CfdiHeader);
   const conceptRepo = AppDataSource.getRepository(CfdiConcept);
   const taxRepo = AppDataSource.getRepository(CfdiTax);
+  const repRepo = AppDataSource.getRepository(CfdiReplacement);
 
-  // 0️⃣ Marca status = PROCESSING
+  // 0️⃣ Marca status = PROCESSING y busca relacion de sustitució
   await headerRepo.update(cfdiId, { status: 'PROCESSING' });
+
+  const toArray = <T>(value: T | T[] | undefined): T[] =>
+    Array.isArray(value) ? value : value ? [value] : [];
+
+  const relNode = comp['cfdi:CfdiRelacionados'];
+  const tipoRel = relNode?.['@_TipoRelacion'] as string | undefined;
+
+  if (
+    tipoRel &&
+    (SUBSTITUTION_RELATIONS as readonly string[]).includes(tipoRel)
+  ) {
+    const relsXml = relNode['cfdi:CfdiRelacionado'];
+    const oldUuids = toArray<{ '@_UUID': string }>(relsXml).map(
+      (r) => r['@_UUID'],
+    );
+
+    for (const oldUuid of oldUuids) {
+      await repRepo.save({
+        nuevo: { id: cfdiId },
+        uuidReemplazado: oldUuid,
+        tipoRelacion: tipoRel as SubstitutionRelation,
+      });
+    }
+  }
 
   // 1️⃣ Desglosa conceptos
   const conceptosXml = comp['cfdi:Conceptos']?.['cfdi:Concepto'] || [];

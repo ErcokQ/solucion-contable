@@ -6,8 +6,7 @@ import { CfdiRepositoryPort } from '../ports/cfdi-repository.port';
 export class GetCfdiDetailUseCase {
   constructor(@inject('CfdiRepo') private readonly repo: CfdiRepositoryPort) {}
 
-  async execute(uuid: string) {
-    const header = await this.repo.findByUuidWithDetails(uuid);
-    return header;
+  execute(uuid: string) {
+    return this.repo.findByUuidWithDetails(uuid); // ya retorna CfdiRow
   }
 }

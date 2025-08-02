@@ -130,6 +130,8 @@ export class BulkImportCfdiUseCase {
           const formaPago = cfdi['@_FormaPago'];
           const metodoPago = cfdi['@_MetodoPago'];
           const lugarExp = cfdi['@_LugarExpedicion'];
+          const nombreEmisor = emisor?.['@_Nombre'] ?? null;
+          const nombreReceptor = receptor?.['@_Nombre'] ?? null;
 
           // guardar XML
           const storedPath = await this.storage.save(
@@ -152,6 +154,8 @@ export class BulkImportCfdiUseCase {
           header.metodoPago = metodoPago;
           header.lugarExpedicion = lugarExp;
           header.xmlPath = storedPath;
+          header.nombreEmisor = nombreEmisor;
+          header.nombreReceptor = nombreReceptor;
           header.status = 'PENDING';
           header.user = Object.assign(new User(), { id: userId });
 

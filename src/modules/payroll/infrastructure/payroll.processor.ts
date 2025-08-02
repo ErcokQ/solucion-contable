@@ -1,6 +1,3 @@
-/* ────────────────────────────────────────────────────────────────
- * src/modules/payroll/infrastructure/payroll.processor.ts
- * ──────────────────────────────────────────────────────────────── */
 import { Job } from 'bullmq';
 import { promises as fs } from 'node:fs';
 import crypto from 'node:crypto';

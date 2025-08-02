@@ -7,7 +7,7 @@ export class JwtTokenService implements TokenServicePort {
   private readonly refreshSecret = config.JWT_REFRESH_SECRET;
 
   sign(payload: object, opts: jwt.SignOptions = {}): string {
-    return jwt.sign(payload, this.accessSecret, { expiresIn: '15m', ...opts });
+    return jwt.sign(payload, this.accessSecret, { expiresIn: '24h', ...opts });
   }
 
   verify<T = unknown>(token: string): T {
