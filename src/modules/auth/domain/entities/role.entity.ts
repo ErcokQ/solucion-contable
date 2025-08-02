@@ -4,18 +4,31 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
-import { UserRole } from './user-role.entity';
+import { User } from './user.entity';
+import { Permission } from './permission.entity';
 
 @Entity({ name: 'roles' })
 export class Role {
   @PrimaryGeneratedColumn()
   id!: number;
-  @Column({ length: 50, unique: true })
+  @Column('varchar', { length: 50, unique: true })
   name!: string;
   @CreateDateColumn({ name: 'created_at' }) createAt!: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updateAt!: Date;
 
-  @OneToMany(() => UserRole, (ur) => ur.role) userRoles!: UserRole[];
+  @ManyToMany(() => User, (user) => user.roles)
+  users!: User[];
+
+  @ManyToMany(() => Permission, (permission) => permission.roles, {
+    eager: true,
+  })
+  @JoinTable({
+    name: 'role_permissions', // nombre de la tabla puente
+    joinColumn: { name: 'role_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'permission_id', referencedColumnName: 'id' },
+  })
+  permissions!: Permission[];
 }

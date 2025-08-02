@@ -13,6 +13,7 @@ const EnvSchema = z.object({
 
   /* App */
   PORT: z.coerce.number().default(3000),
+  BASE_SERVER: z.string().default('api'),
 
   /* MySQL */
   DB_HOST: z.string(),
@@ -25,6 +26,10 @@ const EnvSchema = z.object({
   /* Redis */
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.coerce.number().default(6379),
+
+  /* JWT */
+  JWT_SECRET: z.string().default('defaultAccess'),
+  JWT_REFRESH_SECRET: z.string().default('defaultRefresh'),
 
   /* Logger */
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),

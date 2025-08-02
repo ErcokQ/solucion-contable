@@ -1,14 +1,21 @@
+/* worker/index.ts */
+
 import 'reflect-metadata';
-import '@infra/queue/queue.provider'; // inicializa conexión Redis
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env' });
 
-/* importa todos los módulos que registren workers */
-import '@cfdi/infrastructure/cfdi.processor';
-// import '@/modules/payroll/infrastructure/payroll.processor';
+import { AppDataSource } from '@infra/orm/data-source';
+import '@infra/queue/queue.provider';
 
-console.log('[worker] Arrancando workers…');
+import '@cfdi/infrastructure/cfdi.processor'; // ✅ worker CFDI
+import '@payments/infrastructure/payment.processor'; // ✅ worker Payments
+import '@payments/infrastructure/payments.bootstrap';
+import '@payroll/infrastructure/payroll.processor'; // ✅ worker Payroll
+import '@payroll/infrastructure/payroll.bootstrap';
 
-// opcional: captura señales para apagar limpiamente
-process.on('SIGTERM', async () => {
-  console.log('[worker] Recibida señal SIGTERM, apagando worker…');
-  process.exit(0);
-});
+async function bootstrap() {
+  console.log('[worker] Inicializando BD…');
+  await AppDataSource.initialize();
+  console.log('[worker] BD OK, workers listos');
+}
+bootstrap();

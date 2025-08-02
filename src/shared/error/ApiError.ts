@@ -1,9 +1,10 @@
 export class ApiError extends Error {
-  public status: number;
-  constructor(status: number, message: string) {
-    super(message);
-    this.status = status;
-    this.name = 'ApiError';
+  constructor(
+    public status: number,
+    public code: string, // p.ej. 'EMAIL_ALREADY_EXISTS'
+    public details?: unknown, // opcional: info extra
+  ) {
+    super(code); // mensaje = code por defecto
     Object.setPrototypeOf(this, ApiError.prototype);
   }
 }

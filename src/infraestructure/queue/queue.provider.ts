@@ -8,7 +8,7 @@ const redisOpts: RedisOptions = {
   enableReadyCheck: false, // acelera el boot en dev
 };
 
-const connection = new IORedis(redisOpts);
+export const connection = new IORedis(redisOpts);
 
 export class QueueProvider {
   static buildQueue<T>(name: string, defaultJobOpts?: JobsOptions) {
