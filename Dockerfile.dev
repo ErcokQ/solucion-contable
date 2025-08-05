@@ -1,26 +1,35 @@
 # ------------------------------------------------------------------
-# Imagen DEV – no compila, ejecuta .ts con recarga automática
+# Imagen DEV – ejecuta .ts con ts-node-dev + hot-reload
 # ------------------------------------------------------------------
 FROM node:22.16-alpine
 
-# 1️⃣ Carpeta de trabajo
+# Java para xsd-schema-validator
+RUN apk add --no-cache openjdk17-jdk dos2unix \
+    && ln -s /usr/lib/jvm/default-jvm /usr/lib/jvm/java-17-openjdk
+
 WORKDIR /home/app
 
-# 2️⃣ Instalamos dependencias **incluyendo devDependencies**
+# deps (incluyendo devDependencies)
 COPY package*.json ./
 RUN npm ci
 
-# 3️⃣ Copiamos el código (opcional; en local lo montaremos como volumen)
-COPY src ./src
+# código + utilidades
 COPY tsconfig.json ./
+COPY src ./src
 COPY docs ./docs
+COPY scripts/wait-for.sh /usr/local/bin/wait-for
+RUN dos2unix /usr/local/bin/wait-for && chmod +x /usr/local/bin/wait-for   # 🆕 convierte a LF
 
-# 4️⃣ Variables por defecto de desarrollo
+# vars por defecto
 ENV NODE_ENV=development \
     PORT=3000 \
     DB_HOST=mysql \
     DB_PORT=3306 \
     REDIS_HOST=redis
 
-# 5️⃣ Comando de arranque con recarga en caliente
-CMD ["npm", "run", "dev"]
+# arranque:
+# ① espera MySQL
+# ② corre migraciones en .ts
+# ③ lanza API con recarga
+CMD ["sh", "-c", \
+  "wait-for mysql:3306 -- npm run mig:run && npm run dev"]

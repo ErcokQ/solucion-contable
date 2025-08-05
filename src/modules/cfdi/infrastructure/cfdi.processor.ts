@@ -155,7 +155,7 @@ export async function processCfdi(job: Job<CfdiJobData>) {
       conceptos: conceptosArr.length,
       tipo: tipoComprobante,
     },
-    /* 👇  datos adicionales para el módulo Payments */
+    /*  datos adicionales para el módulo Payments */
     meta: { cfdiId, filePath: path },
   });
 

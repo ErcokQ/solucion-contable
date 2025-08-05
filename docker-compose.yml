@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: scre_api
-    env_file: .env
+    env_file: .env.docker
     ports:
       - '3000:3000'
     depends_on:
@@ -18,7 +18,7 @@ services:
     depends_on:
       - mysql
       - redis
-    env_file: .env
+    env_file: .env.docker
     networks:
       - scre-net
 
