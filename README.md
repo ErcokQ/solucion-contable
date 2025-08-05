@@ -43,7 +43,7 @@ Crea (o verifica) la carpeta `.env` y dentro añade:
 .env.production
 ```
 
-> El backend lee `` por defecto. Añade estos archivos a tu `.gitignore`.
+> El backend lee `.env.development` por defecto. Añade estos archivos a tu `.gitignore`.
 
 ### 2.1 Ejemplo de `.env` (modo dev)
 
