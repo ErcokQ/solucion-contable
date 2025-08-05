@@ -16,7 +16,7 @@
 | **MySQL**    | **8.0.x**           | *Linux* `sudo apt install mysql-server` · *Windows/macOS* [**XAMPP/MAMP**](https://www.apachefriends.org/index.html)      |
 | **Redis**    | **7.x**             | *Ubuntu* `sudo apt install redis-server` · *Windows* (Winget) `winget install redis.redis` · *macOS* `brew install redis` |
 
-> El backend usa ``, que requiere `java` y `javac` en el `PATH`.
+> El backend usa `xml-validator`, que requiere `java` y `javac` en el `PATH`.
 
 ---
 
