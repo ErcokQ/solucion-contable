@@ -3,7 +3,13 @@
 ########################
 FROM node:22.16-alpine AS builder
 
+# ——— dependencias del sistema ———
+RUN apk add --no-cache openjdk17-jdk    \
+    && ln -s /usr/lib/jvm/default-jvm /usr/lib/jvm/java-17-openjdk   \
+    && echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk" >> /etc/profile
+
 WORKDIR /home/app
+
 COPY package*.json ./
 RUN npm ci
 
@@ -16,15 +22,20 @@ RUN npx tsc
 ########################
 FROM node:22.16-alpine
 
+# Solo JRE para reducir tamaño
+RUN apk add --no-cache openjdk17-jre-headless \
+    && ln -s /usr/lib/jvm/default-jvm /usr/lib/jvm/java-17-openjdk
+
 WORKDIR /home/app
-ENV NODE_ENV=production
+ENV NODE_ENV=production \
+    JAVA_HOME=/usr/lib/jvm/java-17-openjdk
 
 COPY package*.json ./
-RUN npm ci --omit=dev --ignore-scripts
+RUN npm ci --omit=dev --ignore-scripts   # ejecuta de nuevo post-install (ya con java)
 
 COPY --from=builder /home/app/dist ./dist
-COPY docs ./docs 
+COPY docs ./docs
 COPY scripts/wait-for.sh /usr/local/bin/wait-for
 RUN chmod +x /usr/local/bin/wait-for
 
-CMD ["sh", "-c", "wait-for mysql:3306 -- npx typeorm migration:run -d dist/infraestructure/orm/data-source.js && node dist/app.js "]
+CMD ["sh", "-c", "wait-for mysql:3306 -- npx typeorm migration:run -d dist/infraestructure/orm/data-source.js && node dist/app.js"]

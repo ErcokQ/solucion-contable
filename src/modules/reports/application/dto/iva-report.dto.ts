@@ -2,7 +2,7 @@
 import { z } from 'zod';
 
 export const IvaReportDtoSchema = z.object({
-  tipo: z.enum(['emitidos', 'recibidos']).default('emitidos'), // Según el RFC que se analiza
+  tipo: z.enum(['emitidos', 'recibidos']).default('emitidos'),
   rfc: z.string().trim().min(12).max(13),
 
   fechaDesde: z.coerce.date().optional(),
