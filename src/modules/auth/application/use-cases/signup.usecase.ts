@@ -25,6 +25,7 @@ export class SignupUseCase {
       throw new ApiError(409, 'USERNAME_ALREADY_EXISTS');
 
     // 2. Validar clave de producto
+    console.log('generate key',this.productKeys.generate());
     const key = await this.productKeys.findByCode(dto.productKey);
     if (!key || key.used) throw new ApiError(400, 'INVALID_PRODUCT_KEY');
 

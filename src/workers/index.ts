@@ -2,7 +2,13 @@
 
 import 'reflect-metadata';
 import * as dotenv from 'dotenv';
-dotenv.config({ path: '.env' });
+import path from 'path';
+
+const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
+const envPath = path.resolve(process.cwd(), envFile);
+
+dotenv.config({ path: envPath });
+//dotenv.config({ path: '.env' });
 
 import { AppDataSource } from '@infra/orm/data-source';
 import '@infra/queue/queue.provider';

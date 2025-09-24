@@ -36,6 +36,8 @@ const EnvSchema = z.object({
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
 
+
+
 /* 3. Parsea y valida */
 const _env = EnvSchema.safeParse(process.env);
 

@@ -29,10 +29,10 @@ const app = express();
 
 /**COnfiguracion cors */
 app.use(
-  cors({
+  cors(/*{
     origin: config.URL_FRONTEND,
     credentials: true, // si luego envías cookies
-  }),
+  }*/),
 );
 
 const PORT = config.PORT;
