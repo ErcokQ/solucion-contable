@@ -1,3 +1,1 @@
-export interface QueueProducerPort {
-  addJob(name: string, data: unknown): Promise<void>;
-}
+export type { QueueProducerPort } from '@shared/application/ports/queue-producer.port';
