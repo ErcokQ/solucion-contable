@@ -10,6 +10,10 @@ import { ReportTotalesPorRfcDtoSchema } from '@reports/application/dto/report-to
 import { GenerateTotalesPorRfcUseCase } from './../../application/use-cases/generate-totales-report.usecase';
 import { PayrollReportDtoSchema } from '@reports/application/dto/payroll-report.dto';
 import { GeneratePayrollReportUseCase } from '@reports/application/use-cases/generate-payroll-report.usecase';
+import { PagosPueReportDtoSchema } from '@reports/application/dto/pagos-pue-report.dto';
+import { GeneratePagosPueReportUseCase } from '@reports/application/use-cases/generate-pagos-pue-report.usecase';
+import { PagosPueRaizReportDtoSchema } from '@reports/application/dto/pagos-pue-raiz-report.dto';
+import { GeneratePagosPueRaizReportUseCase } from '@reports/application/use-cases/generate-pagos-pue-raiz-report.usecase';
 
 export const reportsRouter = Router();
 
@@ -89,6 +93,46 @@ reportsRouter.get('/reports/nomina', jwtAuth(), (req, res, next) => {
     res.setHeader(
       'Content-Disposition',
       `attachment; filename=nomina-${Date.now()}.xlsx`,
+    );
+    res.send(out);
+  })().catch(next);
+});
+
+reportsRouter.get('/reports/pagos-pue', jwtAuth(), (req, res, next) => {
+  (async () => {
+    const dto = PagosPueReportDtoSchema.parse(req.query);
+    const out = await container
+      .resolve(GeneratePagosPueReportUseCase)
+      .execute(dto);
+
+    if (dto.formato === 'json') return res.json(out);
+
+    res.type(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=pagos-pue-${Date.now()}.xlsx`,
+    );
+    res.send(out);
+  })().catch(next);
+});
+
+reportsRouter.get('/reports/facturas-pue-raiz', jwtAuth(), (req, res, next) => {
+  (async () => {
+    const dto = PagosPueRaizReportDtoSchema.parse(req.query);
+    const out = await container
+      .resolve(GeneratePagosPueRaizReportUseCase)
+      .execute(dto);
+
+    if (dto.formato === 'json') return res.json(out);
+
+    res.type(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=facturas-pue-raiz-${Date.now()}.xlsx`,
     );
     res.send(out);
   })().catch(next);

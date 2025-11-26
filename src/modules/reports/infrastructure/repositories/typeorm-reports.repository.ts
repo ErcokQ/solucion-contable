@@ -5,11 +5,13 @@ import { AppDataSource } from '@infra/orm/data-source';
 import {
   ReportsRepositoryPort,
   CfdiReportRow,
+  TotalesPorRfcRow,
+  PayrollDetRow,
+  PagosPueRow,
+  FacturaPueRaizRow,
 } from '@reports/application/ports/cfdi-report.port';
 import { IvaReportRow } from '@reports/application/ports/iva-report.port';
 import { ReportTotalesPorRfcDto } from '@reports/application/dto/report-totales-rfc.dto';
-import { TotalesPorRfcRow } from '@reports/application/ports/cfdi-report.port';
-import { PayrollDetRow } from '@reports/application/ports/cfdi-report.port';
 
 export const SUBSTITUTION_RELATIONS = ['04'] as const;
 
@@ -276,5 +278,138 @@ export class TypeOrmReportsRepository implements ReportsRepositoryPort {
     if (fechaHasta) qb.andWhere('ph.fechaPago <= :fh', { fh: fechaHasta });
 
     return qb.orderBy('ph.fechaPago').getRawMany<PayrollDetRow>();
+  }
+
+  async getPagosPueInconsistencias({
+    tipo,
+    rfc,
+    fechaDesde,
+    fechaHasta,
+  }: {
+    tipo: 'emitidos' | 'recibidos';
+    rfc: string;
+    fechaDesde?: Date;
+    fechaHasta?: Date;
+  }): Promise<PagosPueRow[]> {
+    const qb = this.ds
+      // CFDI de Pago
+      .createQueryBuilder('payment_headers', 'ph')
+      .innerJoin('cfdi_headers', 'cp', 'cp.id = ph.cfdiHeaderId')
+      // Detalles del pago (UUID relacionado)
+      .innerJoin('payment_details', 'pd', 'pd.paymentHeaderId = ph.id')
+      // CFDI relacionado (factura de ingreso)
+      .innerJoin('cfdi_headers', 'cf', 'cf.uuid = pd.uuidRelacionado')
+      // descartamos facturas sustituidas
+      .leftJoin(
+        'cfdi_replacements',
+        'rep',
+        'rep.uuidReemplazado = cf.uuid AND rep.tipoRelacion IN (:...rel)',
+        { rel: SUBSTITUTION_RELATIONS },
+      )
+      .select([
+        'cp.uuid          AS uuidPago',
+        'cp.fecha         AS fechaPago',
+        'cp.rfcEmisor     AS rfcEmisorPago',
+        'cp.rfcReceptor   AS rfcReceptorPago',
+
+        'cf.uuid          AS uuidRelacionado',
+        'cf.fecha         AS fechaRelacionado',
+        'cf.rfcEmisor     AS rfcEmisorRelacionado',
+        'cf.rfcReceptor   AS rfcReceptorRelacionado',
+        'cf.metodoPago    AS metodoPagoRelacionado',
+        'cf.formaPago     AS formaPagoRelacionado',
+        'cf.total         AS totalRelacionado',
+
+        'pd.importePagado AS importePagado',
+        'pd.saldoAnterior AS saldoAnterior',
+        'pd.saldoInsoluto AS saldoInsoluto',
+      ])
+      // sólo facturas con método de pago PUE (normalizado)
+      .where("TRIM(UPPER(COALESCE(cf.metodoPago, ''))) = 'PUE'")
+      .andWhere('rep.id IS NULL');
+
+    // filtro por rol (emitidos / recibidos) respecto al CFDI de Pago
+    if (tipo === 'emitidos') {
+      qb.andWhere('cp.rfcEmisor = :rfc', { rfc });
+    } else {
+      qb.andWhere('cp.rfcReceptor = :rfc', { rfc });
+    }
+
+    // rango de fechas sobre la fecha del CFDI de Pago
+    if (fechaDesde) qb.andWhere('cp.fecha >= :fd', { fd: fechaDesde });
+    if (fechaHasta) qb.andWhere('cp.fecha <= :fh', { fh: fechaHasta });
+
+    return qb
+      .orderBy('cp.fecha', 'ASC')
+      .addOrderBy('cp.uuid', 'ASC')
+      .getRawMany<PagosPueRow>();
+  }
+
+  async getFacturasPueRaiz({
+    tipo,
+    rfc,
+    fechaDesde,
+    fechaHasta,
+  }: {
+    tipo: 'emitidos' | 'recibidos';
+    rfc: string;
+    fechaDesde?: Date;
+    fechaHasta?: Date;
+  }): Promise<FacturaPueRaizRow[]> {
+    const qb = this.ds
+      .createQueryBuilder('payment_headers', 'ph')
+      .innerJoin('cfdi_headers', 'cp', 'cp.id = ph.cfdiHeaderId')
+      .innerJoin('payment_details', 'pd', 'pd.paymentHeaderId = ph.id')
+      .innerJoin('cfdi_headers', 'cf', 'cf.uuid = pd.uuidRelacionado')
+      .leftJoin(
+        'cfdi_replacements',
+        'rep',
+        'rep.uuidReemplazado = cf.uuid AND rep.tipoRelacion IN (:...rel)',
+        { rel: SUBSTITUTION_RELATIONS },
+      )
+      .where("TRIM(UPPER(cf.metodoPago)) = 'PUE'")
+      .andWhere('rep.id IS NULL');
+
+    if (tipo === 'emitidos') {
+      qb.andWhere('cp.rfcEmisor = :rfc', { rfc });
+    } else {
+      qb.andWhere('cp.rfcReceptor = :rfc', { rfc });
+    }
+
+    if (fechaDesde) qb.andWhere('cp.fecha >= :fd', { fd: fechaDesde });
+    if (fechaHasta) qb.andWhere('cp.fecha <= :fh', { fh: fechaHasta });
+
+    const rfcContraparteSelect =
+      tipo === 'emitidos'
+        ? 'cf.rfcReceptor AS rfcContraparte'
+        : 'cf.rfcEmisor   AS rfcContraparte';
+
+    qb.select([
+      'cf.uuid       AS uuidFactura',
+      'cf.fecha      AS fechaFactura',
+      'cf.rfcEmisor  AS rfcEmisorFactura',
+      'cf.rfcReceptor AS rfcReceptorFactura',
+      rfcContraparteSelect,
+      'cf.metodoPago AS metodoPago',
+      'cf.formaPago  AS formaPago',
+      'cf.total      AS totalFactura',
+      'COUNT(DISTINCT cp.uuid) AS numeroPagos',
+      'SUM(pd.importePagado)  AS totalPagado',
+      '(cf.total - SUM(pd.importePagado)) AS saldoCalculado',
+      // 👇 NUEVO: tomamos un pago representativo (el menor id)
+      'MIN(ph.id)   AS primerPagoId',
+      'MIN(cp.uuid) AS uuidPrimerPago',
+    ])
+      .groupBy('cf.uuid')
+      .addGroupBy('cf.fecha')
+      .addGroupBy('cf.rfcEmisor')
+      .addGroupBy('cf.rfcReceptor')
+      .addGroupBy('cf.metodoPago')
+      .addGroupBy('cf.formaPago')
+      .addGroupBy('cf.total')
+      .addGroupBy('rfcContraparte')
+      .orderBy('cf.fecha', 'ASC');
+
+    return qb.getRawMany<FacturaPueRaizRow>();
   }
 }

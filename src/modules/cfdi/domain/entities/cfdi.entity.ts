@@ -69,10 +69,10 @@ export class CfdiHeader {
   xmlPath!: string;
 
   @Column('varchar', { length: 255, nullable: true })
-  nombreEmisor?: string;
+  nombreEmisor?: string | null;
 
   @Column('varchar', { length: 255, nullable: true })
-  nombreReceptor?: string;
+  nombreReceptor?: string | null;
 
   @Column('enum', {
     enum: ['PENDING', 'PROCESSING', 'PARSED', 'ERROR'],

@@ -11,41 +11,52 @@ export class XsdValidatorService implements XmlValidatorPort {
     __dirname,
     '../../../../resources/esquemas/cfdi_4_0.xsd',
   );
+
   private readonly tmpDir = path.resolve(__dirname, 'tmp');
 
-  async validate(xml: string): Promise<void> {
-    // Quitar BOM si existe
-    if (xml.charCodeAt(0) === 0xfeff) xml = xml.slice(1);
+  // XSD ya “arreglado” y listo para usar
+  private readonly fixedXsdPath: string;
 
-    // Pre-procesado del XSD
+  constructor() {
+    // 1) Asegurar carpeta tmp una sola vez
+    if (!existsSync(this.tmpDir)) {
+      mkdirSync(this.tmpDir, { recursive: true });
+    }
+
+    // 2) Leer XSD original una sola vez
     const original = readFileSync(this.xsdPath, 'utf8');
 
-    // Asegura tmp dir
-    if (!existsSync(this.tmpDir)) mkdirSync(this.tmpDir);
-
-    // Reemplaza los patterns de value="…"
+    // 3) Arreglar patterns una sola vez
     const fixed = original.replace(
       /(<xs:pattern[^>]*value=")([^"]*)(")/g,
       (_, open, inner, close) => {
-        // Primero escapamos comillas internas
         let escaped = inner.replace(/"/g, '&quot;');
-        // Luego escapamos ampersands solos (que no formen parte de &xxx;)
         escaped = escaped.replace(/&(?![a-zA-Z]+;)/g, '&amp;');
         return open + escaped + close;
       },
     );
 
-    // Escritura temporal
-    const fixedXsd = path.join(this.tmpDir, `fixed-schema.xsd`);
-    writeFileSync(fixedXsd, fixed, 'utf8');
+    // 4) Guardar XSD fijo
+    this.fixedXsdPath = path.join(this.tmpDir, 'fixed-schema.xsd');
+    writeFileSync(this.fixedXsdPath, fixed, 'utf8');
+  }
+
+  async validate(xml: string): Promise<void> {
+    // quitar BOM si existe
+    if (xml.charCodeAt(0) === 0xfeff) {
+      xml = xml.slice(1);
+    }
 
     try {
-      const { valid } = await validateXML(xml, fixedXsd, {
+      const { valid } = await validateXML(xml, this.fixedXsdPath, {
         insecure: true,
       });
-      if (!valid) throw new ApiError(400, 'INVALID_XML');
+
+      if (!valid) {
+        throw new ApiError(400, 'INVALID_XML');
+      }
     } catch (e) {
-      console.error(e);
+      console.error('[XSD VALIDATOR ERROR]', e);
       throw new ApiError(409, 'INVALID_XML');
     }
   }
