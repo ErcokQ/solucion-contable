@@ -1,7 +1,17 @@
 <section class="space-y-6">
   <div class="flex justify-between items-center">
     <h1 class="text-xl font-semibold text-gray-800">CFDIs</h1>
+
     <div class="flex flex-wrap items-end gap-4">
+      @if (uuidFilter()) {
+        <button
+          class="px-3 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 border border-gray-300"
+          (click)="restoreList()"
+        >
+          Restaurar lista completa
+        </button>
+      }
+
       <!-- RFC Emisor (junto al título) -->
       <label
         class="flex items-center gap-2 text-sm text-gray-500"
@@ -36,7 +46,7 @@
         />
       </label>
 
-      <!-- RFC Emisor (junto al título) -->
+      <!-- RFC Receptor -->
       <label
         class="flex items-center gap-2 text-sm text-gray-500"
         title="Buscar por RFC receptor"
@@ -163,7 +173,6 @@
       <!-- Total mínimo / máximo -->
       <label class="flex flex-col text-xs text-gray-500">
         <span class="flex items-center gap-1 mb-0.5">
-          <!-- ícono billete -->
           <svg
             class="w-5 h-5 text-teal-700"
             fill="none"
@@ -254,13 +263,13 @@
       <tbody>
         @if (loading()) {
           <tr>
-            <td colspan="6" class="text-center py-4 text-gray-500">
+            <td colspan="7" class="text-center py-4 text-gray-500">
               Cargando...
             </td>
           </tr>
         } @else if (cfdis().length === 0) {
           <tr>
-            <td colspan="6" class="text-center py-4 text-gray-400">
+            <td colspan="7" class="text-center py-4 text-gray-400">
               No hay CFDIs
             </td>
           </tr>
@@ -302,7 +311,6 @@
                   class="cursor-pointer inline-flex items-center gap-1 bg-teal-50 hover:bg-teal-100 text-teal-700 hover:text-teal-800 px-3 py-1 rounded-full text-sm font-medium transition-colors"
                   (click)="downloadXml($event, cfdi.uuid)"
                 >
-                  <!-- ícono Heroicons outline -->
                   <svg
                     class="w-4 h-4"
                     fill="none"
@@ -322,7 +330,6 @@
                   class="cursor-pointer inline-flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 px-3 py-1 rounded-full text-sm font-medium transition-colors"
                   (click)="deleteCfdi($event, cfdi.uuid)"
                 >
-                  <!-- ícono papelera (Heroicons outline) -->
                   <svg
                     class="w-4 h-4"
                     fill="none"
@@ -368,16 +375,23 @@
       </tbody>
     </table>
   </div>
+
   <!-- Controles de paginación -->
   <div class="flex items-center justify-between mt-4">
-    <!-- Información -->
     <span class="text-sm text-gray-600">
       Página {{ page() }} de {{ totalPages() }} · Mostrando
       {{ cfdis().length }} / {{ total() }} registros
     </span>
 
-    <!-- Botones -->
     <div class="flex gap-1">
+      <button
+        class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
+        (click)="goBlock(-1)"
+        [disabled]="page() === 1"
+      >
+        «
+      </button>
+
       <button
         class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
         (click)="prevPage()"
@@ -403,6 +417,14 @@
       >
         ›
       </button>
+
+      <button
+        class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
+        (click)="goBlock(1)"
+        [disabled]="page() === totalPages()"
+      >
+        »
+      </button>
     </div>
   </div>
 
@@ -417,12 +439,10 @@
     class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
     (click)="closeDetail()"
   >
-    <!-- Card -->
     <div
       class="bg-white w-full max-w-3xl rounded-xl shadow-lg p-6 space-y-6"
       (click)="$event.stopPropagation()"
     >
-      <!-- Encabezado -->
       <div class="flex justify-between items-start">
         <div>
           <h2 class="text-lg font-semibold">CFDI {{ selectedCfdi()!.uuid }}</h2>
@@ -462,7 +482,6 @@
         </button>
       </div>
 
-      <!-- Totales -->
       <div class="grid grid-cols-2 gap-4 text-sm">
         <div>
           Subtotal: <b>{{ selectedCfdi()!.subTotal | number: "1.2-2" }}</b>
@@ -481,7 +500,6 @@
         </div>
       </div>
 
-      <!-- Conceptos -->
       <div class="border-t pt-4">
         <h3 class="font-medium mb-2">
           Conceptos ({{ selectedCfdi()!.concepts.length }})
@@ -501,7 +519,6 @@
                 <tr class="border-t">
                   <td class="px-2 py-1 align-top">
                     {{ c.descripcion }}
-                    <!-- Sub-tabla de impuestos -->
                     @if (c.taxes.length) {
                       <table class="mt-1 w-full text-[11px] bg-gray-50 rounded">
                         <thead class="text-gray-600">
@@ -531,8 +548,6 @@
                       </table>
                     }
                   </td>
-
-                  <!-- columnas cantidad, unitario, importe -->
                   <td class="px-2 py-1 text-right">{{ c.cantidad }}</td>
                   <td class="px-2 py-1 text-right">
                     {{ (+c.valorUnitario).toFixed(2) }}
@@ -560,9 +575,7 @@
 }
 
 <!-- ============ Modal reporte DIOT ============ -->
-
 @if (showDiot()) {
-  <!-- fondo oscuro -->
   <div
     class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
     (click)="closeDiot()"
@@ -571,7 +584,6 @@
       class="bg-white w-full max-w-4xl rounded-xl p-6 shadow"
       (click)="$event.stopPropagation()"
     >
-      <!-- ⬅️  aquí pega tu plantilla DIOT (la que ya mostrabas con loading/rows) -->
       <h1 class="text-xl font-semibold mb-4">Reporte DIOT</h1>
 
       <div class="flex gap-3 mb-4">
@@ -601,7 +613,7 @@
         </button>
       </div>
 
-      @if (loading()) {
+      @if (diotLoading()) {
         <p>Cargando…</p>
       } @else if (rows().length) {
         <div class="overflow-x-auto">
@@ -632,11 +644,12 @@
             </tbody>
           </table>
         </div>
-      } @else if (!loading()) {
+      } @else {
         <p class="text-gray-500">Sin resultados en el rango seleccionado.</p>
       }
-      @if (error()) {
-        <p class="text-red-600">{{ error() }}</p>
+
+      @if (diotError()) {
+        <p class="text-red-600">{{ diotError() }}</p>
       }
 
       <div class="text-right mt-4">

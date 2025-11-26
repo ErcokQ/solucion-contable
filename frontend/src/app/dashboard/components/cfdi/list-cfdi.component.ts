@@ -1,9 +1,11 @@
 // src/app/components/cfdi/list-cfdi.component.ts
 import { Component, effect, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { CfdiService, CfdiRow, DiotRow } from '../../services/cfdi.service';
 import { AlertService } from '../../../ui/alert/services/alert.service';
+
+const PAGES_PER_BLOCK = 20;
 
 @Component({
   standalone: true,
@@ -18,6 +20,8 @@ export class ListCfdiComponent {
   cfdis = signal<CfdiRow[]>([]);
   error = signal<string | null>(null);
   selectedCfdi = signal<CfdiRow | null>(null);
+
+  // DIOT
   rows = signal<DiotRow[]>([]);
   diotError = signal<string | null>(null);
   showDiot = signal(false);
@@ -29,14 +33,26 @@ export class ListCfdiComponent {
   page = signal<number>(1);
   limit = signal<number>(20);
   total = signal<number>(0);
+
   totalPages = computed(() =>
     Math.max(1, Math.ceil(this.total() / this.limit())),
   );
 
-  /** Array 1..n para el *ngFor* de la paginación */
-  pages = computed(() =>
-    Array.from({ length: this.totalPages() }, (_, i) => i + 1),
-  );
+  /** Páginas visibles en el paginador (en bloques de 20) */
+  pages = computed(() => {
+    const total = this.totalPages();
+    const current = this.page();
+
+    if (total <= PAGES_PER_BLOCK) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    const currentBlock = Math.floor((current - 1) / PAGES_PER_BLOCK);
+    const start = currentBlock * PAGES_PER_BLOCK + 1;
+    const end = Math.min(start + PAGES_PER_BLOCK - 1, total);
+
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  });
 
   // filtros
   desde = signal('');
@@ -47,24 +63,74 @@ export class ListCfdiComponent {
   totalMin = signal<number>(0);
   totalMax = signal<number>(0);
 
+  // UUID que viene del query param / filtro directo
+  uuidFilter = signal<string | null>(null);
+
   constructor(
     private cfdiService: CfdiService,
     private alertService: AlertService,
     private route: ActivatedRoute,
+    private router: Router,
   ) {
+    // auto-fetch cada vez que cambie algún filtro / página / uuidFilter
     effect(() => {
       this.fetchList();
     });
   }
 
   ngOnInit() {
-    const initialRfc = this.route.snapshot.queryParamMap.get('rfc');
-    if (initialRfc) this.rfcReceptor.set(initialRfc);
+    this.route.queryParamMap.subscribe((qp) => {
+      const initialRfc = qp.get('rfc');
+      if (initialRfc) this.rfcReceptor.set(initialRfc);
+
+      const initialUuid = qp.get('uuid');
+      if (initialUuid) {
+        // modo "enfocado" a un CFDI concreto
+        this.uuidFilter.set(initialUuid);
+
+        // abrir detalle de ese UUID (opcional, pero útil)
+        this.cfdiService.getCfdiDetail(initialUuid).subscribe({
+          next: (detail) => {
+            this.selectedCfdi.set(detail);
+          },
+          error: () => {
+            this.alertService.show(
+              'No se pudo cargar el CFDI solicitado por UUID',
+              'error',
+            );
+          },
+        });
+      }
+    });
   }
 
   /* ---------------- helpers ---------------- */
   private fetchList() {
     this.loading.set(true);
+    const uf = this.uuidFilter();
+
+    // 🚩 MODO FOCALIZADO POR UUID: usamos SOLO el detalle
+    if (uf) {
+      this.cfdiService.getCfdiDetail(uf).subscribe({
+        next: (detail) => {
+          this.cfdis.set([detail]); // tabla con un único CFDI
+          this.total.set(1);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.cfdis.set([]);
+          this.total.set(0);
+          this.loading.set(false);
+          this.alertService.show(
+            `No se encontró CFDI con UUID ${uf}`,
+            'warning',
+          );
+        },
+      });
+      return;
+    }
+
+    // 🌐 MODO NORMAL: listado paginado
     this.cfdiService
       .listCfdis({
         fechaDesde: this.desde() || undefined,
@@ -76,15 +142,18 @@ export class ListCfdiComponent {
         limit: this.limit(),
         totalMin: this.totalMin() || undefined,
         totalMax: this.totalMax() || undefined,
+        // sin uuid aquí: el filtro por uuid lo manejamos con getCfdiDetail arriba
       })
       .subscribe({
         next: (res) => {
-          /* res: { data: CfdiRow[]; pagination: { total, page, limit } } */
           this.cfdis.set(res.data);
           this.total.set(res.pagination.total);
           this.loading.set(false);
+
           this.alertService.show(
-            `Página ${res.pagination.page} / ${Math.ceil(res.pagination.total / res.pagination.limit)}`,
+            `Página ${res.pagination.page} / ${Math.ceil(
+              res.pagination.total / res.pagination.limit,
+            )}`,
             'success',
           );
         },
@@ -96,7 +165,7 @@ export class ListCfdiComponent {
       });
   }
 
-  /* ---------------- modale detalles ---------------- */
+  /* ---------------- modal detalles ---------------- */
   onRowClick(cfdi: CfdiRow) {
     this.selectedCfdi.set(cfdi);
     this.cfdiService.getCfdiDetail(cfdi.uuid).subscribe({
@@ -119,22 +188,66 @@ export class ListCfdiComponent {
 
   goToUuid(uuid?: string | null) {
     if (!uuid) return;
-    this.onRowClick({ uuid } as unknown as CfdiRow);
+
+    // actualizamos filtro + query param
+    this.uuidFilter.set(uuid);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { uuid },
+      queryParamsHandling: 'merge',
+    });
+
+    this.cfdiService.getCfdiDetail(uuid).subscribe({
+      next: (detail) => {
+        this.selectedCfdi.set(detail);
+      },
+      error: () => {
+        this.alertService.show('Error al cargar detalles del CFDI', 'error');
+      },
+    });
+  }
+
+  /* ---------- Restaurar lista completa ---------- */
+  restoreList() {
+    this.uuidFilter.set(null);
+    this.page.set(1);
+    this.selectedCfdi.set(null);
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { uuid: null },
+      queryParamsHandling: 'merge',
+    });
+    // el effect vuelve a llamar fetchList() sin uuidFilter → listado normal
   }
 
   /* ---------- paginación ---------- */
   nextPage() {
-    if (this.page() < this.totalPages()) this.page.update((v) => v + 1);
-  }
-  prevPage() {
-    if (this.page() > 1) this.page.update((v) => v - 1);
-  }
-  goPage(p: number) {
-    if (p >= 1 && p <= this.totalPages()) this.page.set(p);
+    if (this.page() < this.totalPages()) {
+      this.page.update((v) => v + 1);
+    }
   }
 
-  downloadXml(evet: Event, uuid: string) {
-    evet.stopPropagation();
+  prevPage() {
+    if (this.page() > 1) {
+      this.page.update((v) => v - 1);
+    }
+  }
+
+  goPage(p: number) {
+    const total = this.totalPages();
+    if (p >= 1 && p <= total) {
+      this.page.set(p);
+    }
+  }
+
+  goBlock(delta: number) {
+    const target = this.page() + delta * PAGES_PER_BLOCK;
+    this.goPage(target);
+  }
+
+  downloadXml(event: Event, uuid: string) {
+    event.stopPropagation();
     this.cfdiService.downloadXml(uuid);
     this.alertService.show('Descargando XML...', 'info', 2000);
   }
@@ -145,7 +258,7 @@ export class ListCfdiComponent {
     this.cfdiService.deleteCfdi(uuid).subscribe({
       next: () => {
         this.alertService.show('CFDI eliminado correctamente', 'success');
-        this.fetchList(); // Refrescar lista
+        this.fetchList();
       },
       error: () => {
         this.alertService.show('Error al eliminar CFDI', 'error');
@@ -167,15 +280,17 @@ export class ListCfdiComponent {
       return;
     }
     this.diotLoading.set(true);
-    this.cfdiService.getDiotReport(this.desde(), this.hasta()).subscribe({
-      next: (data) => {
-        this.rows.set(data);
-        this.diotLoading.set(false);
-      },
-      error: () => {
-        this.diotError.set('Error al generar DIOT');
-        this.diotLoading.set(false);
-      },
-    });
+    this.cfdiService
+      .getDiotReport(this.diotDesde(), this.diotHasta())
+      .subscribe({
+        next: (data) => {
+          this.rows.set(data);
+          this.diotLoading.set(false);
+        },
+        error: () => {
+          this.diotError.set('Error al generar DIOT');
+          this.diotLoading.set(false);
+        },
+      });
   }
 }

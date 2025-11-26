@@ -13,6 +13,23 @@ export interface CfdiReportRow {
   Estatus: string;
 }
 
+export interface FacturaPueRaizRow {
+  uuidFactura: string;
+  fechaFactura: string;
+  rfcEmisorFactura: string;
+  rfcReceptorFactura: string;
+  rfcContraparte: string;
+  metodoPago: string | null;
+  formaPago: string | null;
+  totalFactura: string;
+  numeroPagos: string;
+  totalPagado: string;
+  saldoCalculado: string;
+  motivo: string;
+  primerPagoId: string;
+  uuidPrimerPago: string;
+}
+
 export interface IvaReportRow {
   UUID: string;
   Fecha: string;
@@ -48,6 +65,26 @@ export interface PayrollReportRow {
   ISR: string;
   Subsidio: string;
   Neto: string;
+}
+
+export interface PagosPueRow {
+  uuidPago: string;
+  fechaPago: string;
+  rfcEmisorPago: string;
+  rfcReceptorPago: string;
+
+  uuidRelacionado: string;
+  fechaRelacionado: string;
+  rfcEmisorRelacionado: string;
+  rfcReceptorRelacionado: string;
+
+  metodoPagoRelacionado: string | null;
+  formaPagoRelacionado: string | null;
+  totalRelacionado: string;
+
+  importePagado: string;
+  saldoAnterior: string;
+  saldoInsoluto: string;
 }
 
 /* ─────────── Alias cortos ─────────── */
@@ -177,6 +214,58 @@ export class ReportService {
   }): Observable<Blob> {
     const params = this.toParams({ ...dto, formato: 'xlsx' });
     return this.http.get(`${this.api}/nomina`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
+  /* ───────────── Pagos sobre facturas PUE ───────────── */
+
+  getPagosPueJSON(dto: {
+    fechaDesde?: string;
+    fechaHasta?: string;
+    tipo: 'emitidos' | 'recibidos';
+    rfc: string;
+  }): Observable<PagosPueRow[]> {
+    const params = this.toParams({ ...dto, formato: 'json' });
+    return this.http.get<PagosPueRow[]>(`${this.api}/pagos-pue`, { params });
+  }
+
+  downloadPagosPueXlsx(dto: {
+    fechaDesde?: string;
+    fechaHasta?: string;
+    tipo: 'emitidos' | 'recibidos';
+    rfc: string;
+  }): Observable<Blob> {
+    const params = this.toParams({ ...dto, formato: 'xlsx' });
+    return this.http.get(`${this.api}/pagos-pue`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
+  /* ───────────── Facturas PUE “raíz” ───────────── */
+
+  getFacturasPueRaizJSON(dto: {
+    fechaDesde?: string;
+    fechaHasta?: string;
+    tipo: 'emitidos' | 'recibidos';
+    rfc: string;
+  }): Observable<FacturaPueRaizRow[]> {
+    const params = this.toParams({ ...dto, formato: 'json' });
+    return this.http.get<FacturaPueRaizRow[]>(`${this.api}/facturas-pue-raiz`, {
+      params,
+    });
+  }
+
+  downloadFacturasPueRaizXlsx(dto: {
+    fechaDesde?: string;
+    fechaHasta?: string;
+    tipo: 'emitidos' | 'recibidos';
+    rfc: string;
+  }): Observable<Blob> {
+    const params = this.toParams({ ...dto, formato: 'xlsx' });
+    return this.http.get(`${this.api}/facturas-pue-raiz`, {
       params,
       responseType: 'blob',
     });
