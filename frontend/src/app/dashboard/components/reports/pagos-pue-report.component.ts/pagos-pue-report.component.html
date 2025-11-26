@@ -1,0 +1,144 @@
+<section class="space-y-4">
+  <!-- Filtros --------------------------------------------------------->
+  <div class="flex flex-wrap gap-4 items-end">
+    <label class="flex flex-col text-xs text-gray-500">
+      <span>RFC propio</span>
+      <input
+        type="text"
+        class="border px-3 py-1.5 rounded text-sm w-52"
+        [value]="rfc()"
+        (input)="rfc.set(($any($event.target).value || '').trim())"
+      />
+    </label>
+
+    <label class="flex flex-col text-xs text-gray-500">
+      <span>Tipo</span>
+      <select
+        class="border px-2 py-1 rounded text-sm"
+        [value]="tipo()"
+        (change)="tipo.set($any($event.target).value)"
+      >
+        <option value="emitidos">Pagos emitidos</option>
+        <option value="recibidos">Pagos recibidos</option>
+      </select>
+    </label>
+
+    <label class="flex flex-col text-xs text-gray-500">
+      <span>Desde</span>
+      <input
+        type="date"
+        class="border px-2 py-1 rounded text-sm"
+        [value]="fechaDesde()"
+        (input)="fechaDesde.set($any($event.target).value)"
+      />
+    </label>
+
+    <label class="flex flex-col text-xs text-gray-500">
+      <span>Hasta</span>
+      <input
+        type="date"
+        class="border px-2 py-1 rounded text-sm"
+        [value]="fechaHasta()"
+        (input)="fechaHasta.set($any($event.target).value)"
+      />
+    </label>
+
+    <div class="flex gap-2">
+      <button
+        class="px-4 py-1.5 rounded bg-teal-600 text-white text-sm disabled:opacity-60"
+        [disabled]="loading()"
+        (click)="fetch()"
+      >
+        {{ loading() ? "Buscando…" : "Buscar" }}
+      </button>
+
+      <button
+        class="px-4 py-1.5 rounded border border-teal-600 text-teal-700 text-sm disabled:opacity-60"
+        [disabled]="loading() || !rows().length"
+        (click)="exportXlsx()"
+      >
+        Exportar XLSX
+      </button>
+    </div>
+  </div>
+
+  <!-- Mensajes de error / info --------------------------------------->
+  <p *ngIf="error()" class="text-sm text-red-600">
+    {{ error() }}
+  </p>
+
+  <p
+    *ngIf="!loading() && !error() && !rows().length"
+    class="text-sm text-gray-500"
+  >
+    No hay datos para los filtros seleccionados.
+  </p>
+
+  <!-- Tabla ----------------------------------------------------------->
+  <div class="overflow-auto max-h-[60vh]" *ngIf="rows().length">
+    <table class="min-w-full text-xs border border-gray-200">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-2 py-1 border">UUID Pago</th>
+          <th class="px-2 py-1 border">Fecha Pago</th>
+          <th class="px-2 py-1 border">RFC Emisor Pago</th>
+          <th class="px-2 py-1 border">RFC Receptor Pago</th>
+
+          <th class="px-2 py-1 border">UUID Relacionado</th>
+          <th class="px-2 py-1 border">Fecha Relacionado</th>
+          <th class="px-2 py-1 border">RFC Emisor Rel.</th>
+          <th class="px-2 py-1 border">RFC Receptor Rel.</th>
+
+          <th class="px-2 py-1 border">Método Rel.</th>
+          <th class="px-2 py-1 border">Forma Rel.</th>
+          <th class="px-2 py-1 border">Total Rel.</th>
+
+          <th class="px-2 py-1 border">Importe Pagado</th>
+          <th class="px-2 py-1 border">Saldo Anterior</th>
+          <th class="px-2 py-1 border">Saldo Insoluto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of rows()">
+          <td class="px-2 py-1 border whitespace-nowrap">{{ row.uuidPago }}</td>
+          <td class="px-2 py-1 border whitespace-nowrap">
+            {{ row.fechaPago }}
+          </td>
+          <td class="px-2 py-1 border whitespace-nowrap">
+            {{ row.rfcEmisorPago }}
+          </td>
+          <td class="px-2 py-1 border whitespace-nowrap">
+            {{ row.rfcReceptorPago }}
+          </td>
+
+          <td class="px-2 py-1 border whitespace-nowrap">
+            {{ row.uuidRelacionado }}
+          </td>
+          <td class="px-2 py-1 border whitespace-nowrap">
+            {{ row.fechaRelacionado }}
+          </td>
+          <td class="px-2 py-1 border whitespace-nowrap">
+            {{ row.rfcEmisorRelacionado }}
+          </td>
+          <td class="px-2 py-1 border whitespace-nowrap">
+            {{ row.rfcReceptorRelacionado }}
+          </td>
+
+          <td class="px-2 py-1 border whitespace-nowrap">
+            {{ row.metodoPagoRelacionado || "-" }}
+          </td>
+          <td class="px-2 py-1 border whitespace-nowrap">
+            {{ row.formaPagoRelacionado || "-" }}
+          </td>
+          <td class="px-2 py-1 border text-right">
+            {{ row.totalRelacionado }}
+          </td>
+
+          <td class="px-2 py-1 border text-right">{{ row.importePagado }}</td>
+          <td class="px-2 py-1 border text-right">{{ row.saldoAnterior }}</td>
+          <td class="px-2 py-1 border text-right">{{ row.saldoInsoluto }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

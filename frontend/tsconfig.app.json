@@ -8,7 +8,7 @@
   },
   "include": [
     "src/**/*.ts"
-  ],
+, "src/app/dashboard/components/reports/facturas-pue-raiz-report/facturas-pue-raiz-report.componetts"  ],
   "exclude": [
     "src/**/*.spec.ts"
   ]

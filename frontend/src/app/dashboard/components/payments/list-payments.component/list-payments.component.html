@@ -1,5 +1,14 @@
 <section class="space-y-6">
   <div class="text-2xl font-semibold text-gray-800">Complementos de pago</div>
+  @if (paymentId() !== null) {
+    <button
+      class="px-3 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 border border-gray-300"
+      (click)="restoreList()"
+    >
+      Restaurar lista completa
+    </button>
+  }
+
   <!------- filtros ------->
   <div class="flex flex-wrap gap-4 items-end">
     <label class="flex flex-col text-xs text-gray-500">
@@ -93,14 +102,26 @@
   <!------- paginación ------->
   <div class="flex justify-between items-center mt-4 text-sm">
     <span>Página {{ page() }} de {{ totalPages() }}</span>
+
     <div class="flex gap-1">
+      <!-- bloque anterior (20 páginas atrás) -->
       <button
-        class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200"
+        class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
+        (click)="goBlock(-1)"
+        [disabled]="page() === 1"
+      >
+        «
+      </button>
+
+      <!-- página anterior -->
+      <button
+        class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
         (click)="prev()"
         [disabled]="page() === 1"
       >
         ‹
       </button>
+
       @for (p of pages(); track p) {
         <button
           class="px-3 py-1 rounded hover:bg-teal-100"
@@ -110,12 +131,23 @@
           {{ p }}
         </button>
       }
+
+      <!-- página siguiente -->
       <button
-        class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200"
+        class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
         (click)="next()"
         [disabled]="page() === totalPages()"
       >
         ›
+      </button>
+
+      <!-- bloque siguiente (20 páginas adelante) -->
+      <button
+        class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
+        (click)="goBlock(1)"
+        [disabled]="page() === totalPages()"
+      >
+        »
       </button>
     </div>
   </div>
@@ -156,10 +188,10 @@
           </div>
           <div>
             Monto:
-            <b
-              >{{ selected()!.monto | number: "1.2-2" }}
-              {{ selected()!.moneda }}</b
-            >
+            <b>
+              {{ selected()!.monto | number: "1.2-2" }}
+              {{ selected()!.moneda }}
+            </b>
           </div>
           <div>
             Forma: <b>{{ selected()!.formaPago }}</b>
@@ -178,11 +210,10 @@
           CFDI:
           <a
             [routerLink]="['/dashboard/cfdis']"
-            [queryParams]="{ rfc: selected()!.cfdiHeader.rfcReceptor }"
+            [queryParams]="{ uuid: selected()!.cfdiHeader.uuid }"
             class="text-teal-600 underline inline-flex items-center gap-1"
           >
             {{ selected()!.cfdiHeader.uuid }}
-            <!-- icono externa -->
             <svg
               class="w-3 h-3"
               fill="none"

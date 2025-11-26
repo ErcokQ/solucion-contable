@@ -2,6 +2,22 @@
 
 import { ReportTotalesPorRfcDto } from '../dto/report-totales-rfc.dto';
 
+export interface FacturaPueRaizRow {
+  uuidFactura: string;
+  fechaFactura: Date;
+  rfcEmisorFactura: string;
+  rfcReceptorFactura: string;
+  rfcContraparte: string; // eje RFC como pidió tu jefe
+  metodoPago: string | null;
+  formaPago: string | null;
+  totalFactura: string;
+  numeroPagos: string; // COUNT(...)
+  totalPagado: string; // SUM(importePagado)
+  saldoCalculado: string; // totalFactura - totalPagado
+  primerPagoId: string; // MySQL devuelve string en raw
+  uuidPrimerPago: string;
+}
+
 export interface CfdiReportRow {
   UUID: string;
   Fecha: Date;
@@ -32,6 +48,25 @@ export interface PayrollDetRow {
   Neto: string;
 }
 
+export interface PagosPueRow {
+  uuidPago: string;
+  fechaPago: Date;
+  rfcEmisorPago: string;
+  rfcReceptorPago: string;
+
+  uuidRelacionado: string;
+  fechaRelacionado: Date;
+  rfcEmisorRelacionado: string;
+  rfcReceptorRelacionado: string;
+
+  metodoPagoRelacionado: string | null;
+  formaPagoRelacionado: string | null;
+  totalRelacionado: number;
+  importePagado: number;
+  saldoAnterior: number;
+  saldoInsoluto: number;
+}
+
 export interface ReportsRepositoryPort {
   getCfdiReport(dto: {
     fechaDesde?: Date;
@@ -48,4 +83,18 @@ export interface ReportsRepositoryPort {
     fechaDesde?: Date;
     fechaHasta?: Date;
   }): Promise<PayrollDetRow[]>;
+
+  getPagosPueInconsistencias(dto: {
+    tipo: 'emitidos' | 'recibidos';
+    rfc: string;
+    fechaDesde?: Date;
+    fechaHasta?: Date;
+  }): Promise<PagosPueRow[]>;
+
+  getFacturasPueRaiz(params: {
+    tipo: 'emitidos' | 'recibidos';
+    rfc: string;
+    fechaDesde?: Date;
+    fechaHasta?: Date;
+  }): Promise<FacturaPueRaizRow[]>;
 }

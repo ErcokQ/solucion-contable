@@ -64,6 +64,7 @@ export class CfdiService {
     status?: string | null;
     totalMin?: number;
     totalMax?: number;
+    uuid?: string;
   }): Observable<{
     data: CfdiRow[];
     pagination: { total: number; page: number; limit: number };

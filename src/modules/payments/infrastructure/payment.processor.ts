@@ -35,22 +35,31 @@ const parser = new XMLParser({
 });
 
 /* ---------- TYPES AUX ---------- */
+type DoctoRelacionadoXML = {
+  '@_IdDocumento': string;
+  '@_ImpPagado': string;
+  '@_ImpSaldoAnt': string;
+  '@_ImpSaldoInsoluto': string;
+};
+
 type PagoXML = {
   '@_FechaPago': string;
   '@_FormaDePagoP': string;
   '@_MonedaP'?: string;
   '@_TipoCambioP'?: string;
   '@_Monto': string;
+
+  // Variante con contenedor
   'pago20:DoctosRelacionados'?: {
     'pago20:DoctoRelacionado': DoctoRelacionadoXML | DoctoRelacionadoXML[];
   };
-};
 
-type DoctoRelacionadoXML = {
-  '@_IdDocumento': string;
-  '@_ImpPagado': string;
-  '@_ImpSaldoAnt': string;
-  '@_ImpSaldoInsoluto': string;
+  // Variante plana (la que traen tus XML)
+  'pago20:DoctoRelacionado'?: DoctoRelacionadoXML | DoctoRelacionadoXML[];
+
+  // Por si algún PAC manda sin prefijo o pago10
+  DoctoRelacionado?: DoctoRelacionadoXML | DoctoRelacionadoXML[];
+  'pago10:DoctoRelacionado'?: DoctoRelacionadoXML | DoctoRelacionadoXML[];
 };
 
 /* ---------- PROCESSOR ---------- */
@@ -82,6 +91,7 @@ export async function processPayments(job: Job<PaymentJobData>) {
   const nodoPagos = complemento?.['pago20:Pagos'] as
     | { 'pago20:Pago': PagoXML | PagoXML[] }
     | undefined;
+
   if (!nodoPagos) {
     // CFDI sin complemento de pagos: no es error fatal
     return { ok: true, message: 'SIN_COMPLEMENTO_PAGOS' };
@@ -105,8 +115,19 @@ export async function processPayments(job: Job<PaymentJobData>) {
     }
 
     /* 3.1 Detalles relacionados */
-    const relRaw =
+
+    // ➊ Variante plana: <pago20:DoctoRelacionado> directo dentro de <pago20:Pago>
+    const relNodeDirect =
+      pago['pago20:DoctoRelacionado'] ??
+      pago['DoctoRelacionado'] ??
+      pago['pago10:DoctoRelacionado'];
+
+    // ➋ Variante con contenedor: <pago20:DoctosRelacionados><pago20:DoctoRelacionado>...</pago20:DoctosRelacionados>
+    const relNodeWrapped =
       pago['pago20:DoctosRelacionados']?.['pago20:DoctoRelacionado'];
+
+    const relRaw = relNodeDirect ?? relNodeWrapped;
+
     const relArr: DoctoRelacionadoXML[] = relRaw
       ? Array.isArray(relRaw)
         ? relRaw

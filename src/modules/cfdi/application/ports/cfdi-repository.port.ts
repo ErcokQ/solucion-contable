@@ -11,6 +11,7 @@ export interface CfdiRepositoryPort {
     pagination: { total: number; page: number; limit: number };
   }>;
   findByUuidWithDetails(uuid: string): Promise<CfdiHeader>;
+  findExistingByUuids(uuids: string[]): Promise<{ uuid: string; id: number }[]>;
   getXmlPathByUuid(uuid: string): Promise<string>;
   deleteByUuid(uuid: string): Promise<void>;
   getDiotReport(filters: ReportDiotDto): Promise<

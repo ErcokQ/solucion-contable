@@ -20,6 +20,18 @@ export class TypeOrmCfdiRepository implements CfdiRepositoryPort {
     this.repo = ds.getRepository(CfdiHeader);
   }
 
+  async findExistingByUuids(
+    uuids: string[],
+  ): Promise<{ uuid: string; id: number }[]> {
+    if (!uuids.length) return [];
+
+    return this.repo
+      .createQueryBuilder('c')
+      .select(['c.uuid AS uuid', 'c.id AS id'])
+      .where('c.uuid IN (:...uuids)', { uuids })
+      .getRawMany<{ uuid: string; id: number }>();
+  }
+
   existsByUuid(uuid: string): Promise<boolean> {
     return this.repo
       .createQueryBuilder('c')
