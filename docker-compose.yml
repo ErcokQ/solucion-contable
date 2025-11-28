@@ -6,21 +6,30 @@ services:
     container_name: scre_api
     env_file: .env.docker
     ports:
-      - '3000:3000'
+      - "3000:3000"
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - scre-net
+
   worker:
-    build: .
-    command: node dist/workers/index.js
-    depends_on:
-      - mysql
-      - redis
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scre_worker
+    command: sh -c "wait-for mysql:3306 -- node dist/workers/index.js"
     env_file: .env.docker
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - scre-net
+    restart: unless-stopped
 
   mysql:
     image: mysql:8.0
@@ -34,11 +43,11 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
-      - '3306:3306'
+      - "3306:3306"
     networks:
       - scre-net
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       retries: 5
 
@@ -47,7 +56,7 @@ services:
     container_name: scre_redis
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      - "6379:6379"
     networks:
       - scre-net
 
