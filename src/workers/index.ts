@@ -9,11 +9,11 @@ dotenv.config({ path: '.env' });
 import { AppDataSource } from '../infraestructure/orm/data-source';
 import '../infraestructure/queue/queue.provider';
 
-import '../cfdi/infrastructure/cfdi.processor'; // ✅ worker CFDI
-import '../payments/infrastructure/payment.processor'; // ✅ worker Payments
-import '../payments/infrastructure/payments.bootstrap';
-import '../payroll/infrastructure/payroll.processor'; // ✅ worker Payroll
-import '../payroll/infrastructure/payroll.bootstrap';
+import '../modules/cfdi/infrastructure/cfdi.processor'; // ✅ worker CFDI
+import '../modules/payments/infrastructure/payment.processor'; // ✅ worker Payments
+import '../modules/payments/infrastructure/payments.bootstrap';
+import '../modules/payroll/infrastructure/payroll.processor'; // ✅ worker Payroll
+import '../modules/payroll/infrastructure/payroll.bootstrap';
 
 async function bootstrap() {
   console.log('[worker] Inicializando BD…');
