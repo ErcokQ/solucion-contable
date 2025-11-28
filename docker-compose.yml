@@ -42,8 +42,8 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
     volumes:
       - mysql_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
+    #ports:
+    # - "3306:3306"
     networks:
       - scre-net
     healthcheck:
@@ -55,8 +55,8 @@ services:
     image: redis:7-alpine
     container_name: scre_redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
+    #ports:
+    #  - "6379:6379"
     networks:
       - scre-net
 
