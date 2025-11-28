@@ -22,8 +22,8 @@ RUN npx tsc
 ########################
 FROM node:22.16-alpine
 
-# Solo JRE para reducir tamaño
-RUN apk add --no-cache openjdk17-jre-headless \
+# Solo JRE + netcat para wait-for
+RUN apk add --no-cache openjdk17-jre-headless netcat-openbsd \
     && ln -s /usr/lib/jvm/default-jvm /usr/lib/jvm/java-17-openjdk
 
 WORKDIR /home/app
