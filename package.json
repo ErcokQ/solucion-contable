@@ -6,7 +6,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:smoke": "vitest run --config vitest.smoke.config.ts",
@@ -61,6 +61,7 @@
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
@@ -68,6 +69,7 @@
     "bcrypt": "^6.0.0",
     "bullmq": "^5.56.0",
     "class-validator": "^0.14.2",
+    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
@@ -77,7 +79,9 @@
     "multer": "^2.0.1",
     "mysql2": "^3.14.1",
     "node-stream-zip": "^1.15.0",
+    "p-limit": "^7.2.0",
     "swagger-ui-express": "^5.0.1",
+    "tsconfig-paths": "^4.2.0",
     "tsyringe": "^4.10.0",
     "typeorm": "^0.3.25",
     "uuid": "^11.1.0",
@@ -85,7 +89,6 @@
     "winston-daily-rotate-file": "^5.0.0",
     "xsd-schema-validator": "^0.11.0",
     "yamljs": "^0.3.0",
-    "zod": "^3.25.67",
-    "tsconfig-paths": "^4.2.0"
+    "zod": "^3.25.67"
   }
 }
