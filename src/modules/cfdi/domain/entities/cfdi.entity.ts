@@ -26,6 +26,13 @@ export class CfdiHeader {
   @Column('varchar', { length: 13 })
   rfcReceptor!: string;
 
+  @Column('varchar', {
+    length: 1,
+    nullable: true,
+    name: 'tipo_comprobante',
+  })
+  tipoComprobante?: string | null;
+
   // Serie / Folio
   @Column('varchar', { length: 20, nullable: true })
   serie?: string;

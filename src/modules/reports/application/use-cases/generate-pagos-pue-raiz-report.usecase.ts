@@ -10,8 +10,18 @@ import {
 import { PagosPueRaizReportDto } from '../dto/pagos-pue-raiz-report.dto';
 import { ApiError } from '@shared/error/ApiError';
 
+/** Clasificación “fiscal” que le queremos dar a cada factura PUE */
+type ClasificacionPago =
+  | 'UNA_EXHIBICION'
+  | 'VARIAS_EXHIBICIONES'
+  | 'PAGO_PARCIAL'
+  | 'PAGO_PARCIAL_EN_PARCIALIDADES'
+  | 'INDETERMINADO';
+
+/** Row enriquecida: lo que viene del repo + motivo + clasificación */
 type FacturaPueRaizConMotivo = FacturaPueRaizRow & {
   motivo: string;
+  clasificacion: ClasificacionPago;
 };
 
 @injectable()
@@ -30,28 +40,34 @@ export class GeneratePagosPueRaizReportUseCase {
       fechaHasta: dto.fechaHasta,
     });
 
+    // 👇 aquí va TU bloque de clasificación
     const rows: FacturaPueRaizConMotivo[] = raw.map((r) => {
-      //const total = Number(r.totalFactura ?? 0);
       const pagado = Number(r.totalPagado ?? 0);
       const numPagos = Number(r.numeroPagos ?? 0);
       const saldo = Number(r.saldoCalculado ?? 0);
 
       let motivo: string;
+      let clasificacion: ClasificacionPago;
 
       if (numPagos <= 0 || pagado === 0) {
         motivo = 'PUE_CON_PAGO_CFDI_INDETERMINADO';
+        clasificacion = 'INDETERMINADO';
       } else if (saldo > 0 && numPagos > 1) {
         motivo = 'PUE_CON_PARCIALIDADES_Y_SALDO_PENDIENTE';
+        clasificacion = 'PAGO_PARCIAL_EN_PARCIALIDADES';
       } else if (saldo > 0 && numPagos === 1) {
         motivo = 'PUE_CON_PAGO_PARCIAL';
+        clasificacion = 'PAGO_PARCIAL';
       } else if (saldo <= 0 && numPagos > 1) {
         motivo = 'PUE_CON_PARCIALIDADES_PAGADA_CON_COMPLEMENTOS';
+        clasificacion = 'VARIAS_EXHIBICIONES';
       } else {
         // saldo <= 0 && numPagos === 1
         motivo = 'PUE_PAGADA_CON_COMPLEMENTO_DE_PAGO';
+        clasificacion = 'UNA_EXHIBICION';
       }
 
-      return { ...r, motivo };
+      return { ...r, motivo, clasificacion };
     });
 
     if (dto.formato === 'json') return rows;
