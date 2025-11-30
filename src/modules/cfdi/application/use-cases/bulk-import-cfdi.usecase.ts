@@ -1,3 +1,4 @@
+// src/modules/cfdi/application/use-cases/bulk-import-cfdi.usecase.ts
 import 'reflect-metadata';
 import { injectable, inject } from 'tsyringe';
 import StreamZip from 'node-stream-zip';
@@ -39,6 +40,7 @@ type ParsedCfdi = {
     lugarExpedicion?: string;
     nombreEmisor: string | null;
     nombreReceptor: string | null;
+    tipoComprobante?: string | null; // 👈 NUEVO
   };
 };
 
@@ -127,10 +129,8 @@ export class BulkImportCfdiUseCase {
     entries: StreamZip.ZipEntry[],
     userId: number,
   ): Promise<BulkResult[]> {
-    // Ahora el parse NO llama al validador, así que puede ser más concurrente
     const limitParse = pLimit(8); // CPU-bound JS
-    // Aquí sí incluimos validación XSD + IO, mejor concurrencia baja
-    const limitSave = pLimit(2);
+    const limitSave = pLimit(2); // IO + validación XSD
 
     const parser = new XMLParser({
       ignoreAttributes: false,
@@ -199,6 +199,7 @@ export class BulkImportCfdiUseCase {
             const lugarExpedicion = cfdi['@_LugarExpedicion'];
             const nombreEmisor = emisor?.['@_Nombre'] ?? null;
             const nombreReceptor = receptor?.['@_Nombre'] ?? null;
+            const tipoComprobante = cfdi['@_TipoDeComprobante'] ?? null; // 👈 NUEVO
 
             const parsed: ParsedCfdi = {
               file: entry.name,
@@ -218,6 +219,7 @@ export class BulkImportCfdiUseCase {
                 lugarExpedicion,
                 nombreEmisor,
                 nombreReceptor,
+                tipoComprobante,
               },
             };
 
@@ -264,7 +266,6 @@ export class BulkImportCfdiUseCase {
         limitSave(async () => {
           const existingId = existingMap.get(item.uuid);
           if (existingId) {
-            // CFDI ya importado: NO corremos el validador XSD ni tocamos disco/BD
             return {
               file: item.file,
               status: 'already_imported',
@@ -272,7 +273,6 @@ export class BulkImportCfdiUseCase {
             };
           }
 
-          // validar contra XSD solo si es nuevo
           const xmlStr = item.xmlBuffer.toString('utf8');
           try {
             await this.validator.validate(xmlStr);
@@ -303,6 +303,7 @@ export class BulkImportCfdiUseCase {
             lugarExpedicion,
             nombreEmisor,
             nombreReceptor,
+            tipoComprobante,
           } = item.headerData;
 
           const storedPath = await this.storage.save(
@@ -326,6 +327,7 @@ export class BulkImportCfdiUseCase {
           header.xmlPath = storedPath;
           header.nombreEmisor = nombreEmisor;
           header.nombreReceptor = nombreReceptor;
+          header.tipoComprobante = tipoComprobante ?? null; // 👈 NUEVO
           header.status = 'PENDING';
           header.user = Object.assign(new User(), { id: userId });
 

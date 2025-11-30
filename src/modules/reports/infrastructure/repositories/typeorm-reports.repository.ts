@@ -369,6 +369,7 @@ export class TypeOrmReportsRepository implements ReportsRepositoryPort {
       )
       .where("TRIM(UPPER(cf.metodoPago)) = 'PUE'")
       .andWhere('rep.id IS NULL');
+    //.andWhere("cf.tipoComprobante = 'I'");
 
     if (tipo === 'emitidos') {
       qb.andWhere('cp.rfcEmisor = :rfc', { rfc });
