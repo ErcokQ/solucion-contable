@@ -21,6 +21,7 @@ const parser = new XMLParser({
 
 const SUBSTITUTION_RELATIONS = ['04'] as const;
 type SubstitutionRelation = (typeof SUBSTITUTION_RELATIONS)[number];
+
 /**
  *
  * @param job Procesa el trabajo de colas del cfdi
@@ -29,7 +30,7 @@ type SubstitutionRelation = (typeof SUBSTITUTION_RELATIONS)[number];
 export async function processCfdi(job: Job<CfdiJobData>) {
   const { cfdiId, path } = job.data;
   const xml = await fs.readFile(path, 'utf8');
-  const json = parser.parse(xml); // 1️⃣ parsear
+  const json = parser.parse(xml);
   const comp = json['cfdi:Comprobante'];
 
   const headerRepo = AppDataSource.getRepository(CfdiHeader);
@@ -37,12 +38,21 @@ export async function processCfdi(job: Job<CfdiJobData>) {
   const taxRepo = AppDataSource.getRepository(CfdiTax);
   const repRepo = AppDataSource.getRepository(CfdiReplacement);
 
-  // 0️⃣ Marca status = PROCESSING y busca relacion de sustitució
-  await headerRepo.update(cfdiId, { status: 'PROCESSING' });
-
   const toArray = <T>(value: T | T[] | undefined): T[] =>
     Array.isArray(value) ? value : value ? [value] : [];
 
+  // 🔹 Leer TipoDeComprobante del XML
+  const tipoComprobanteXml = (comp?.['@_TipoDeComprobante'] ?? null) as
+    | string
+    | null;
+
+  // 0️⃣ Marca status = PROCESSING y guarda tipoComprobante (por si faltaba)
+  await headerRepo.update(cfdiId, {
+    status: 'PROCESSING',
+    tipoComprobante: tipoComprobanteXml,
+  });
+
+  // 1️⃣ Relación de sustitución
   const relNode = comp['cfdi:CfdiRelacionados'];
   const tipoRel = relNode?.['@_TipoRelacion'] as string | undefined;
 
@@ -64,14 +74,13 @@ export async function processCfdi(job: Job<CfdiJobData>) {
     }
   }
 
-  // 1️⃣ Desglosa conceptos
+  // 2️⃣ Desglosa conceptos
   const conceptosXml = comp['cfdi:Conceptos']?.['cfdi:Concepto'] || [];
   const conceptosArr = Array.isArray(conceptosXml)
     ? conceptosXml
     : [conceptosXml];
 
   for (const c of conceptosArr) {
-    // 2️⃣ Crear y guardar el concepto
     const concept = conceptRepo.create({
       cfdiHeader: { id: cfdiId },
       claveProdServ: c['@_ClaveProdServ'],
@@ -84,7 +93,6 @@ export async function processCfdi(job: Job<CfdiJobData>) {
     });
     const savedConcept = await conceptRepo.save(concept);
 
-    // 3️⃣ Impuestos trasladados y retenidos
     const impNode = c['cfdi:Impuestos'] || {};
     const traslados = impNode['cfdi:Traslados']?.['cfdi:Traslado'] || [];
     const retenciones = impNode['cfdi:Retenciones']?.['cfdi:Retencion'] || [];
@@ -103,18 +111,18 @@ export async function processCfdi(job: Job<CfdiJobData>) {
     const allTaxes = [
       ...trasladosArr.map((x) => ({
         ...(typeof x === 'object' && x ? x : {}),
-        tipo: 'TRASLADADO',
+        tipo: 'TRASLADADO' as const,
       })),
       ...retencionesArr.map((x) => ({
         ...(typeof x === 'object' && x ? x : {}),
-        tipo: 'RETENIDO',
+        tipo: 'RETENIDO' as const,
       })),
     ];
 
     for (const t of allTaxes) {
       const partialTax: DeepPartial<CfdiTax> = {
         concept: { id: savedConcept.id },
-        tipo: t.tipo as 'TRASLADADO' | 'RETENIDO',
+        tipo: t.tipo,
         impuesto: t['@_Impuesto'],
         tipoFactor: t['@_TipoFactor'],
         tasaCuota: t['@_TasaOCuota']
@@ -129,16 +137,15 @@ export async function processCfdi(job: Job<CfdiJobData>) {
     }
   }
 
-  // 4️⃣ Marca status = PARSED
+  // 3️⃣ Marca status = PARSED
   await headerRepo.update(cfdiId, { status: 'PARSED' });
 
   console.log(`[processor] CFDI ${cfdiId} procesado, ruta ${path}`);
 
-  /* 5️⃣  Publicar evento CfdiProcessed */
+  /* 4️⃣  Publicar evento CfdiProcessed */
   const bus = container.resolve<EventBus>('EventBus');
-  const tipoComprobante = comp['@_TipoDeComprobante'];
 
-  /* Obtén header ya persistido para armar el payload */
+  // Obtén header ya persistido (incluye tipoComprobante)
   const header = await headerRepo.findOneByOrFail({ id: cfdiId });
 
   await bus.publish({
@@ -153,9 +160,8 @@ export async function processCfdi(job: Job<CfdiJobData>) {
       fecha: header.fecha,
       total: header.total,
       conceptos: conceptosArr.length,
-      tipo: tipoComprobante,
+      tipo: header.tipoComprobante as 'I' | 'E' | 'P' | 'N',
     },
-    /*  datos adicionales para el módulo Payments */
     meta: { cfdiId, filePath: path },
   });
 
