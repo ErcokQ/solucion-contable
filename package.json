@@ -15,7 +15,7 @@
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "docs:serve": "npx swagger-ui-watcher ./docs/openapi/openapi_v2.yaml --port 4000",
     "dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules --exit-child -r tsconfig-paths/register src/app.ts",
-    "start": "node dist/app.js",
+    "start": "set NODE_ENV=production&& node dist/app.js",
     "start:dev": "npm run dev",
     "worker": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/workers/index.ts",
     "job:demo": "ts-node -r tsconfig-paths/register src/tmp/demoJob.ts",
