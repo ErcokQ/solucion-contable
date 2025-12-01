@@ -28,10 +28,12 @@ import cors from 'cors';
 const app = express();
 
 /**COnfiguracion cors */
+const allowedOrigins = [config.URL_FRONTEND, 'http://62.151.183.229:8080/'];
+
 app.use(
   cors({
-    origin: config.URL_FRONTEND,
-    credentials: true, // si luego envías cookies
+    origin: allowedOrigins,
+    credentials: true,
   }),
 );
 

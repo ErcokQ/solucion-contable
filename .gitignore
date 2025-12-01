@@ -28,10 +28,6 @@ swagger-static/
 docker-compose.override.yml
 *.local.yml
 **/.docker
-Dockerfile
-docker-compose.yml
-.dockerignore
-Dockerfile.dev
 
 # ─────────────── VSCode / JetBrains / OS ─────────
 .vscode/
