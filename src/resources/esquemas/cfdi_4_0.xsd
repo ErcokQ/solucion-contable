@@ -9,8 +9,10 @@
            attributeFormDefault="unqualified">
 <xs:import namespace="http://www.sat.gob.mx/nomina12" schemaLocation="complementos/nomina12.xsd"/>
 <xs:import namespace="http://www.sat.gob.mx/TimbreFiscalDigital" schemaLocation="complementos/TimbreFiscalDigitalv11.xsd"/>
-<xs:import namespace="http://www.sat.gob.mx/sitio_internet/cfd/catalogos" schemaLocation="http://www.sat.gob.mx/sitio_internet/cfd/catalogos/catCFDI.xsd"/>
-<xs:import namespace="http://www.sat.gob.mx/sitio_internet/cfd/tipoDatos/tdCFDI" schemaLocation="http://www.sat.gob.mx/sitio_internet/cfd/tipoDatos/tdCFDI/tdCFDI.xsd"/>
+<xs:import namespace="http://www.sat.gob.mx/sitio_internet/cfd/catalogos"
+           schemaLocation="complementos/catCFDI.xsd"/>
+<xs:import namespace="http://www.sat.gob.mx/sitio_internet/cfd/tipoDatos/tdCFDI"
+           schemaLocation="complementos/tdCFDI.xsd"/>
 <xs:element name="Comprobante">
 <xs:annotation>
 <xs:documentation>Estándar de Comprobante Fiscal Digital por Internet.</xs:documentation>
