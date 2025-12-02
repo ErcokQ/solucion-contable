@@ -14,6 +14,9 @@ services:
         condition: service_started
     networks:
       - scre-net
+    volumes:
+      # Volumen compartido para los XML de CFDI
+      - cfdi_storage:/home/app/dist/storage
 
   worker:
     build:
@@ -30,6 +33,9 @@ services:
     networks:
       - scre-net
     restart: unless-stopped
+    volumes:
+      # Mismo volumen, misma ruta interna
+      - cfdi_storage:/home/app/dist/storage
 
   mysql:
     image: mysql:8.0
@@ -62,6 +68,7 @@ services:
 
 volumes:
   mysql_data:
+  cfdi_storage:
 
 networks:
   scre-net:
