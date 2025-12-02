@@ -68,6 +68,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@types/xsd-schema-validator": "^0.5.7",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.56.0",
     "class-validator": "^0.14.2",
