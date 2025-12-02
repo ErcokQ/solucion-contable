@@ -17,9 +17,12 @@ COPY src ./src
 
 # compilar TS + resolver alias
 RUN npx tsc -p tsconfig.json \
- && npx tsc-alias -p tsconfig.json \
- # 👇 copiar esquemas desde src/resources → dist/resources
- && mkdir -p dist/resources \
+ && npx tsc-alias -p tsconfig.json
+
+# 👇 copiar recursos tal cual a dist
+# si en el host tienes src/resources/esquemas/cfdi_4_0.xsd,
+# aquí terminas con dist/resources/esquemas/cfdi_4_0.xsd
+RUN mkdir -p dist/resources \
  && cp -r src/resources/* dist/resources/
 
 ########################
@@ -39,7 +42,6 @@ COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 COPY tsconfig.json ./
-
 COPY --from=builder /home/app/dist ./dist
 COPY docs ./docs
 COPY scripts/wait-for.sh /usr/local/bin/wait-for
