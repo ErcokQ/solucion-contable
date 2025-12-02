@@ -18,25 +18,23 @@ interface XsdValidationError extends Error {
   messages?: unknown;
 }
 
+type XsdValidationMode = 'strict' | 'warn' | 'off';
+
 @injectable()
 export class XsdValidatorService implements XmlValidatorPort {
-  // En runtime (__dirname) estamos en:
-  //  - src/modules/cfdi/infrastructure/services   (dev con ts-node-dev)
-  //  - dist/modules/cfdi/infrastructure/services  (build)
-  // Con este resolve llegamos a:
-  //  - src/resources/esquemas/cfdi_4_0.xsd
-  //  - dist/resources/esquemas/cfdi_4_0.xsd
   private readonly xsdPath: string = path.resolve(
     __dirname,
     '../../../../resources/esquemas/cfdi_4_0.xsd',
   );
 
-  // Directorio raíz de esquemas (aquí están cfdi_4_0.xsd y complementos/)
   private readonly xsdDir: string = path.dirname(this.xsdPath);
 
-  // Permite forzar el uso del XSD tal cual (sin "fix") si se pone XSD_USE_RAW=true
   private readonly useRawXsd: boolean =
     process.env.XSD_USE_RAW === 'true' || false;
+
+  // NUEVO: modo de validación
+  private readonly mode: XsdValidationMode =
+    (process.env.XSD_VALIDATION_MODE as XsdValidationMode) || 'strict';
 
   private readonly fixedXsdPath: string;
 
@@ -46,6 +44,7 @@ export class XsdValidatorService implements XmlValidatorPort {
     console.log('[XSD-CONSTRUCTOR] xsdPath:', this.xsdPath);
     console.log('[XSD-CONSTRUCTOR] xsdDir:', this.xsdDir);
     console.log('[XSD-CONSTRUCTOR] XSD_USE_RAW:', this.useRawXsd);
+    console.log('[XSD-CONSTRUCTOR] MODE:', this.mode);
 
     if (!existsSync(this.xsdPath)) {
       console.error(
@@ -54,7 +53,6 @@ export class XsdValidatorService implements XmlValidatorPort {
       );
     }
 
-    // 1) Arreglamos TODOS los .xsd del directorio de esquemas (incluye complementos/)
     console.log(
       '[XSD-CONSTRUCTOR] Iniciando fix recursivo de .xsd en:',
       this.xsdDir,
@@ -62,7 +60,6 @@ export class XsdValidatorService implements XmlValidatorPort {
     this.fixAllXsds(this.xsdDir);
     console.log('[XSD-CONSTRUCTOR] Fix recursivo de .xsd terminado');
 
-    // 2) Leemos el principal (ya arreglado) sólo para loguear y hacer una copia fija
     const original: string = readFileSync(this.xsdPath, 'utf8');
     console.log(
       '[XSD-CONSTRUCTOR] XSD principal leído. Longitud:',
@@ -88,7 +85,6 @@ export class XsdValidatorService implements XmlValidatorPort {
       schemaLocations,
     );
 
-    // Por simplicidad, la "versión fija" del principal es igual al archivo actual
     const fixed = original;
 
     this.fixedXsdPath = path.join(this.xsdDir, 'fixed-schema.xsd');
@@ -103,10 +99,6 @@ export class XsdValidatorService implements XmlValidatorPort {
     console.log('========== [XSD-CONSTRUCTOR FIN] ==========');
   }
 
-  /**
-   * Recorre recursivamente un directorio y aplica fixXsPatterns
-   * a todos los archivos .xsd que encuentre.
-   */
   private fixAllXsds(dir: string): void {
     const entries = readdirSync(dir, { withFileTypes: true });
 
@@ -155,10 +147,6 @@ export class XsdValidatorService implements XmlValidatorPort {
     }
   }
 
-  /**
-   * Arregla los <xs:pattern ... value="..."> que traen caracteres
-   * que a Xerces no le gustan (como '<', '&' sueltos o comillas dobles).
-   */
   private fixXsPatterns(xsd: string): { fixed: string; replacements: number } {
     let replacements = 0;
 
@@ -168,14 +156,8 @@ export class XsdValidatorService implements XmlValidatorPort {
         replacements++;
 
         let escaped = inner;
-
-        // Escapar comillas dentro del value (deben ser &quot;)
         escaped = escaped.replace(/"/g, '&quot;');
-
-        // Escapar '&' que no sean entidades (&algo;)
         escaped = escaped.replace(/&(?![a-zA-Z]+;)/g, '&amp;');
-
-        // Escapar '<' que estén en el value
         escaped = escaped.replace(/</g, '&lt;');
 
         return open + escaped + close;
@@ -188,9 +170,17 @@ export class XsdValidatorService implements XmlValidatorPort {
   async validate(xml: string): Promise<void> {
     let xmlToValidate: string = xml;
 
-    // Quitar BOM si viene
     if (xmlToValidate.length > 0 && xmlToValidate.charCodeAt(0) === 0xfeff) {
       xmlToValidate = xmlToValidate.slice(1);
+    }
+
+    // Si el modo es "off", ni siquiera intentamos validar
+    if (this.mode === 'off') {
+      console.warn(
+        '[XSD-VALIDATE] MODO=off → se omite validación XSD, sólo se registra longitud:',
+        xmlToValidate.length,
+      );
+      return;
     }
 
     const schemaPath = this.useRawXsd ? this.xsdPath : this.fixedXsdPath;
@@ -199,6 +189,7 @@ export class XsdValidatorService implements XmlValidatorPort {
     console.log('[XSD-VALIDATE] Config:', {
       useRawXsd: this.useRawXsd,
       schemaPath,
+      mode: this.mode,
     });
 
     console.log('[XSD-VALIDATE] Datos XML:', {
@@ -221,6 +212,15 @@ export class XsdValidatorService implements XmlValidatorPort {
       });
 
       if (!valid) {
+        if (this.mode === 'warn') {
+          console.warn(
+            '[XSD-VALIDATE] XML NO VÁLIDO según XSD, pero MODO=warn → NO se bloquea la carga',
+            { status, messages },
+          );
+          console.log('========== [XSD-VALIDATE FIN WARN] ==========');
+          return;
+        }
+
         console.error('[XSD-VALIDATE] NO VÁLIDO, lanzando ApiError 400');
         throw new ApiError(400, 'INVALID_XML');
       }
@@ -230,7 +230,6 @@ export class XsdValidatorService implements XmlValidatorPort {
       const err = error as XsdValidationError;
 
       console.error('[XSD RAW ERROR OBJ]', JSON.stringify(err, null, 2));
-
       console.error('[XSD VALIDATOR ERROR DETALLE]', {
         message: err.message,
         stack: err.stack,
@@ -239,8 +238,15 @@ export class XsdValidatorService implements XmlValidatorPort {
         messages: err.messages,
       });
 
-      console.log('========== [XSD-VALIDATE FIN ERROR] ==========');
+      if (this.mode === 'warn') {
+        console.warn(
+          '[XSD-VALIDATE] EXCEPCIÓN durante validación, pero MODO=warn → NO se bloquea la carga',
+        );
+        console.log('========== [XSD-VALIDATE FIN WARN/ERROR] ==========');
+        return;
+      }
 
+      console.log('========== [XSD-VALIDATE FIN ERROR] ==========');
       throw new ApiError(409, 'INVALID_XML');
     }
   }
