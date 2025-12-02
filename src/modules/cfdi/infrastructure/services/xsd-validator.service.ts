@@ -1,10 +1,10 @@
 import { validateXML } from 'xsd-schema-validator';
 import { ApiError } from '@shared/error/ApiError';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { injectable } from 'tsyringe';
 import { XmlValidatorPort } from '@cfdi/application/ports/xml-validator.port';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import crypto from 'node:crypto';
 
 interface XsdValidationResult {
   valid: boolean;
@@ -20,18 +20,17 @@ interface XsdValidationError extends Error {
 
 @injectable()
 export class XsdValidatorService implements XmlValidatorPort {
+  // en runtime ya estamos en dist, así que resolvemos desde dist
   private readonly xsdPath: string = path.resolve(
     __dirname,
     '../../../../resources/esquemas/cfdi_4_0.xsd',
   );
 
-  // que quede en modules/cfdi/tmp (dev y prod)
   private readonly tmpDir: string = path.resolve(__dirname, '../../tmp');
+  private readonly useRawXsd: boolean =
+    process.env.XSD_USE_RAW === 'true' || false;
 
   private readonly fixedXsdPath: string;
-
-  // toggle para probar XSD crudo vs XSD reparado
-  private readonly useRawXsd: boolean = process.env.XSD_USE_RAW === '1';
 
   constructor() {
     console.log('========== [XSD-CONSTRUCTOR INICIO] ==========');
@@ -53,36 +52,45 @@ export class XsdValidatorService implements XmlValidatorPort {
       original.length,
     );
 
-    // Hash del XSD original para comparar entre entornos
-    const originalHash = crypto
+    const shaOriginal = crypto
       .createHash('sha256')
       .update(original, 'utf8')
       .digest('hex');
 
-    console.log('[XSD-CONSTRUCTOR] original SHA256:', originalHash);
-
-    // preview para ver que sea el XSD correcto
-    console.log('[XSD-CONSTRUCTOR] XSD preview:', original.slice(0, 200));
-
-    // "Reparar" patterns problemáticos
-    const fixed: string = original.replace(
-      /(<xs:pattern[^>]*value=")([^"]*)(")/g,
-      (_match: string, open: string, inner: string, close: string): string => {
-        let escaped: string = inner.replace(/"/g, '&quot;');
-        escaped = escaped.replace(/&(?![a-zA-Z]+;)/g, '&amp;');
-        return open + escaped + close;
-      },
+    console.log('[XSD-CONSTRUCTOR] original SHA256:', shaOriginal);
+    console.log(
+      '[XSD-CONSTRUCTOR] XSD preview:',
+      original.slice(0, 200).replace(/\r?\n/g, '\\n'),
     );
 
-    const fixedHash = crypto
+    // --- DEBUG: schemaLocations encontrados ---
+    const schemaLocations = [
+      ...original.matchAll(/schemaLocation="([^"]+)"/g),
+    ].map((m) => m[1]);
+    console.log('[XSD-CONSTRUCTOR] schemaLocations:', schemaLocations);
+
+    let fixed = original;
+
+    // Forzar que los imports del SAT usen rutas locales (por si quedan viejos)
+    fixed = fixed.replace(
+      /schemaLocation="http:\/\/www\.sat\.gob\.mx\/sitio_internet\/cfd\/catalogos\/catCFDI\.xsd"/,
+      'schemaLocation="./catCFDI.xsd"',
+    );
+
+    fixed = fixed.replace(
+      /schemaLocation="http:\/\/www\.sat\.gob\.mx\/sitio_internet\/cfd\/tipoDatos\/tdCFDI\.xsd"/,
+      'schemaLocation="./tdCFDI.xsd"',
+    );
+
+    const shaFixed = crypto
       .createHash('sha256')
       .update(fixed, 'utf8')
       .digest('hex');
 
-    console.log('[XSD-CONSTRUCTOR] fixed   SHA256:', fixedHash);
+    console.log('[XSD-CONSTRUCTOR] fixed   SHA256:', shaFixed);
     console.log(
       '[XSD-CONSTRUCTOR] ¿cambió el XSD al “arreglarlo”?',
-      original !== fixed,
+      shaOriginal !== shaFixed,
     );
 
     this.fixedXsdPath = path.join(this.tmpDir, 'fixed-schema.xsd');
@@ -100,7 +108,7 @@ export class XsdValidatorService implements XmlValidatorPort {
   async validate(xml: string): Promise<void> {
     let xmlToValidate: string = xml;
 
-    // quitar BOM si llega
+    // quitar BOM si viene
     if (xmlToValidate.length > 0 && xmlToValidate.charCodeAt(0) === 0xfeff) {
       xmlToValidate = xmlToValidate.slice(1);
     }
@@ -112,6 +120,7 @@ export class XsdValidatorService implements XmlValidatorPort {
       useRawXsd: this.useRawXsd,
       schemaPath,
     });
+
     console.log('[XSD-VALIDATE] Datos XML:', {
       xmlLength: xmlToValidate.length,
       xmlHead: xmlToValidate.slice(0, 200),
@@ -131,23 +140,16 @@ export class XsdValidatorService implements XmlValidatorPort {
         messages,
       });
 
-      console.log('========== [XSD-VALIDATE FIN OK] ==========');
-
       if (!valid) {
+        console.error('[XSD-VALIDATE] NO VÁLIDO, lanzando ApiError 400');
         throw new ApiError(400, 'INVALID_XML');
       }
+
+      console.log('========== [XSD-VALIDATE FIN OK] ==========');
     } catch (error: unknown) {
       const err = error as XsdValidationError;
 
-      // log crudo del error que viene del validador / Java
-      try {
-        console.error(
-          '[XSD RAW ERROR OBJ]',
-          JSON.stringify(err, Object.getOwnPropertyNames(err), 2),
-        );
-      } catch {
-        console.error('[XSD RAW ERROR OBJ] no serializable');
-      }
+      console.error('[XSD RAW ERROR OBJ]', JSON.stringify(err, null, 2));
 
       console.error('[XSD VALIDATOR ERROR DETALLE]', {
         message: err.message,
@@ -157,7 +159,7 @@ export class XsdValidatorService implements XmlValidatorPort {
         messages: err.messages,
       });
 
-      console.error('========== [XSD-VALIDATE FIN ERROR] ==========');
+      console.log('========== [XSD-VALIDATE FIN ERROR] ==========');
 
       throw new ApiError(409, 'INVALID_XML');
     }
