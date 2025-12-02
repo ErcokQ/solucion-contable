@@ -24,21 +24,20 @@ export class XsdValidatorService implements XmlValidatorPort {
     '../../../../resources/esquemas/cfdi_4_0.xsd',
   );
 
-  private readonly tmpDir: string = path.resolve(__dirname, 'tmp');
+  // ahora el “tmp” es el MISMO directorio del XSD original
+  private readonly xsdDir: string = path.dirname(this.xsdPath);
 
   private readonly fixedXsdPath: string;
 
   constructor() {
-    // Logs de diagnóstico de rutas
     console.log('[XSD-CONSTRUCTOR] __dirname:', __dirname);
     console.log('[XSD-CONSTRUCTOR] xsdPath esperado:', this.xsdPath);
-    console.log('[XSD-CONSTRUCTOR] tmpDir:', this.tmpDir);
+    console.log('[XSD-CONSTRUCTOR] xsdDir:', this.xsdDir);
 
-    if (!existsSync(this.tmpDir)) {
-      mkdirSync(this.tmpDir, { recursive: true });
-      console.log('[XSD-CONSTRUCTOR] tmpDir creado');
-    } else {
-      console.log('[XSD-CONSTRUCTOR] tmpDir ya existía');
+    if (!existsSync(this.xsdDir)) {
+      // en teoría siempre existe, pero por si acaso
+      mkdirSync(this.xsdDir, { recursive: true });
+      console.log('[XSD-CONSTRUCTOR] xsdDir creado');
     }
 
     const original: string = readFileSync(this.xsdPath, 'utf8');
@@ -56,7 +55,8 @@ export class XsdValidatorService implements XmlValidatorPort {
       },
     );
 
-    this.fixedXsdPath = path.join(this.tmpDir, 'fixed-schema.xsd');
+    // 🔴 OJO: ahora el XSD arreglado queda en el MISMO directorio
+    this.fixedXsdPath = path.join(this.xsdDir, 'cfdi_4_0.fixed.xsd');
     writeFileSync(this.fixedXsdPath, fixed, 'utf8');
 
     console.log(
