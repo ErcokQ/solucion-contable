@@ -5,58 +5,70 @@ import { injectable } from 'tsyringe';
 import { XmlValidatorPort } from '@cfdi/application/ports/xml-validator.port';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 
+interface XsdValidationResult {
+  valid: boolean;
+  result?: unknown;
+  messages?: unknown;
+}
+
 @injectable()
 export class XsdValidatorService implements XmlValidatorPort {
-  private readonly xsdPath = path.resolve(
+  private readonly xsdPath: string = path.resolve(
     __dirname,
     '../../../../resources/esquemas/cfdi_4_0.xsd',
   );
 
-  private readonly tmpDir = path.resolve(__dirname, 'tmp');
+  // ahora el tmp queda en modules/cfdi/tmp (en dev y prod)
+  private readonly tmpDir: string = path.resolve(__dirname, '../../tmp');
 
-  // XSD ya “arreglado” y listo para usar
   private readonly fixedXsdPath: string;
 
   constructor() {
-    // 1) Asegurar carpeta tmp una sola vez
     if (!existsSync(this.tmpDir)) {
       mkdirSync(this.tmpDir, { recursive: true });
     }
 
-    // 2) Leer XSD original una sola vez
-    const original = readFileSync(this.xsdPath, 'utf8');
+    const original: string = readFileSync(this.xsdPath, 'utf8');
 
-    // 3) Arreglar patterns una sola vez
-    const fixed = original.replace(
+    const fixed: string = original.replace(
       /(<xs:pattern[^>]*value=")([^"]*)(")/g,
-      (_, open, inner, close) => {
-        let escaped = inner.replace(/"/g, '&quot;');
+      (_match: string, open: string, inner: string, close: string): string => {
+        let escaped: string = inner.replace(/"/g, '&quot;');
         escaped = escaped.replace(/&(?![a-zA-Z]+;)/g, '&amp;');
         return open + escaped + close;
       },
     );
 
-    // 4) Guardar XSD fijo
     this.fixedXsdPath = path.join(this.tmpDir, 'fixed-schema.xsd');
     writeFileSync(this.fixedXsdPath, fixed, 'utf8');
   }
 
   async validate(xml: string): Promise<void> {
+    let xmlToValidate: string = xml;
+
     // quitar BOM si existe
-    if (xml.charCodeAt(0) === 0xfeff) {
-      xml = xml.slice(1);
+    if (xmlToValidate.length > 0 && xmlToValidate.charCodeAt(0) === 0xfeff) {
+      xmlToValidate = xmlToValidate.slice(1);
     }
 
     try {
-      const { valid } = await validateXML(xml, this.fixedXsdPath, {
+      const result = (await validateXML(xmlToValidate, this.fixedXsdPath, {
         insecure: true,
+      })) as XsdValidationResult;
+
+      const { valid, result: status, messages } = result;
+
+      console.log('[XSD-VALIDATE RESULT]', {
+        valid,
+        status,
+        messages,
       });
 
       if (!valid) {
         throw new ApiError(400, 'INVALID_XML');
       }
-    } catch (e) {
-      console.error('[XSD VALIDATOR ERROR]', e);
+    } catch (error) {
+      console.error('[XSD VALIDATOR ERROR]', error);
       throw new ApiError(409, 'INVALID_XML');
     }
   }
