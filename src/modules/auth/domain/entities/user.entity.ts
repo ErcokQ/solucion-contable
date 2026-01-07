@@ -6,8 +6,10 @@ import {
   UpdateDateColumn,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { Role } from './role.entity';
+import { UserAccount } from '../../../account/domain/entities/user-account.entity';
 
 @Entity({ name: 'users' })
 export class User {
@@ -35,6 +37,12 @@ export class User {
   @Column('bool', { default: true })
   activo!: boolean; // soft-disable
 
+  @Column('bool', { name: 'email_verified', default: false })
+  emailVerified!: boolean;
+
+  @Column('datetime', { name: 'email_verified_at', nullable: true })
+  emailVerifiedAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at' }) createdAt!: Date;
   @UpdateDateColumn({ name: 'updated_at' }) updatedAt!: Date;
 
@@ -46,6 +54,10 @@ export class User {
     inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
   })
   roles!: Role[]; // roles asignados al usuario
+
+  /* ---------- relación 1-a-N con UserAccount ---------- */
+  @OneToMany(() => UserAccount, (ua) => ua.user)
+  userAccounts!: UserAccount[];
 
   /* ====================================================== */
   /*  F Á B R I C A                                          */
@@ -66,6 +78,8 @@ export class User {
     user.passwordHash = passwordHash;
     user.provider = provider;
     user.activo = true;
+    user.emailVerified = false;
+    user.emailVerifiedAt = null;
     user.roles = [];
     return user;
   }

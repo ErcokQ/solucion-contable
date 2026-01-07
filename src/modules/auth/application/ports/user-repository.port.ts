@@ -33,4 +33,10 @@ export interface UserRepositoryPort {
    * @returns Promesa de void que se resuelve cuando el usuario se guarda correctamente.
    */
   save(user: User): Promise<void>;
+  /**
+   *  Actualiza un usuario existente en el repositorio.
+   * @param id
+   * @param patch
+   */
+  update(id: number, patch: Partial<User>): Promise<void>;
 }

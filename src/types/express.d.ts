@@ -7,6 +7,7 @@ declare global {
       requestId: string;
       userId?: number;
       userRoles?: string[];
+      accountId?: number;
     }
     interface Response {
       locals: { log: typeof logger };

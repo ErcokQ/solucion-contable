@@ -7,6 +7,10 @@ import { TokenServicePort } from '../ports/token-service.port';
 import { ApiError } from '@shared/error/ApiError';
 import { User } from '../../domain/entities/user.entity';
 import { ProductKeyRepositoryPort } from '../ports/product-key-repository.port';
+import { EmailVerificationRepositoryPort } from '../ports/email-verification-repository.port';
+import { MailServicePort } from '../ports/mail-service.port';
+import crypto from 'crypto';
+import { config } from '@shared/config';
 
 @injectable()
 export class SignupUseCase {
@@ -16,6 +20,9 @@ export class SignupUseCase {
     @inject('HashServicePort') private hash: HashServicePort,
     @inject('TokenServicePort') private jwt: TokenServicePort,
     @inject('ProductKeyRepo') private productKeys: ProductKeyRepositoryPort,
+    @inject('EmailVerificationRepo')
+    private verifications: EmailVerificationRepositoryPort,
+    @inject('MailServicePort') private mail: MailServicePort,
   ) {}
 
   async execute(dto: SignUpDto) {
@@ -40,10 +47,28 @@ export class SignupUseCase {
     await this.users.save(user);
     await this.productKeys.markAsUsed(key.id);
 
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(rawToken)
+      .digest('hex');
+
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await this.verifications.create({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+    });
+
+    const verifyUrl = `${config.URL_FRONTEND}/verify-email?token=${rawToken}`;
+    await this.mail.sendEmailVerification(user.email, verifyUrl);
+
     return {
       userId: user.id,
       accessToken: this.jwt.sign({ sub: user.id, roles: ['user'] }),
       refreshToken: this.jwt.signRefresh({ sub: user.id }),
+      requiresEmailVerification: true,
     };
   }
 }

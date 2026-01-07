@@ -3,6 +3,7 @@ import 'reflect-metadata';
 import { config } from '@shared/config';
 import express from 'express';
 import { AppDataSource } from '@infra/orm/data-source';
+import path from 'path';
 
 import { requestLogger } from '@infra/http/logger.middleware';
 import { healthRouter } from 'routes/health.router';
@@ -13,6 +14,8 @@ import { paymentsRouter } from '@payments/infrastructure/routes/payments.routes'
 import { payrollRouter } from '@payroll/infrastructure/routes/payroll.routes';
 import { summaryRouter } from '@summary/infrastructure/routes/summary.routes';
 import { reportsRouter } from '@reports/infrastructure/routes/reports.routes';
+import { accountRouter } from '@account/infraestructure/routes/account.router';
+import { usersRouter } from '@auth/infrastructure/routes/users.router';
 
 import { ApiError } from '@shared/error/ApiError';
 import { errorHandler } from '@shared/middlewares/error-handler.middleware';
@@ -52,6 +55,11 @@ app.use(base, paymentsRouter);
 app.use(base, payrollRouter);
 app.use(base, summaryRouter);
 app.use(base, reportsRouter);
+app.use(base, accountRouter);
+app.use(base, usersRouter);
+
+/**Exponemos ruta de subida */
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
 app.use((_req, _res, next) => next(new ApiError(404, 'ROUTE_NOT_FOUND')));
 app.use(errorHandler);

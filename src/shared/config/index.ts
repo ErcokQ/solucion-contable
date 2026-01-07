@@ -34,6 +34,10 @@ const EnvSchema = z.object({
 
   /* Logger */
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+
+  /* Resend Mail */
+  RESEND_API_KEY: z.string().default(''),
+  MAIL_FROM: z.string().default(''),
 });
 
 /* 3. Parsea y valida */

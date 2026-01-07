@@ -25,6 +25,7 @@
     "mig:run": "npm run typeorm -- migration:run      -d ./src/infraestructure/orm/data-source.ts",
     "mig:revert": "npm run typeorm -- migration:revert   -d ./src/infraestructure/orm/data-source.ts",
     "seed:admin": "ts-node --require tsconfig-paths/register src/scripts/seed-admin.ts",
+    "seed:roles": "ts-node --require tsconfig-paths/register src/scripts/seed-roles.ts",
     "rebuild:payments": "ts-node --require tsconfig-paths/register src/scripts/rebuild-payments-from-xml.ts"
   },
   "keywords": [],
@@ -83,6 +84,7 @@
     "mysql2": "^3.14.1",
     "node-stream-zip": "^1.15.0",
     "p-limit": "^7.2.0",
+    "resend": "^6.6.0",
     "swagger-ui-express": "^5.0.1",
     "tsconfig-paths": "^4.2.0",
     "tsyringe": "^4.10.0",

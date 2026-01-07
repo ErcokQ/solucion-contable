@@ -42,6 +42,15 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
       throw err;
     }
   }
+
+  async update(id: number, patch: Partial<User>): Promise<void> {
+    try {
+      await this.repo.update({ id }, patch);
+    } catch (err: unknown) {
+      if (isDuplicate(err)) throw new ApiError(409, 'EMAIL_OR_USERNAME_EXISTS');
+      throw err;
+    }
+  }
 }
 
 /* ---------- type guard para evitar any ---------- */

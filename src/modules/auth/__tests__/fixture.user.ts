@@ -14,6 +14,8 @@ export function makeFakeUser(overrides: Partial<User> = {}): User {
     provider: 'local',
     avatar: null,
     activo: true,
+    emailVerified: true,
+    emailVerifiedAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
     roles: [],

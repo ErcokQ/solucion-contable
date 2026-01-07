@@ -4,6 +4,7 @@ import { UserRepositoryPort } from '@auth/application/ports/user-repository.port
 import { HashServicePort } from '@auth/application/ports/hash-service.port';
 import { TokenServicePort } from '@auth/application/ports/token-service.port';
 import { Role } from '@auth/domain/entities/role.entity';
+import { UserAccountRepositoryPort } from '@auth/application/ports/user-account-repository.port';
 
 export const fakeRoleUser: Role = Object.assign(new Role(), {
   id: 2,
@@ -24,6 +25,7 @@ export const mockRepo = (): Mocked<UserRepositoryPort> => ({
   findByLogin: vi.fn(),
   findById: vi.fn(),
   save: vi.fn(),
+  update: vi.fn(),
 });
 
 export const mockHash = (): Mocked<HashServicePort> => ({
@@ -41,4 +43,11 @@ export const mockJwt = () =>
 
 export const mockRoleRepo = () => ({
   findByName: vi.fn().mockResolvedValue(fakeRoleUser),
+});
+
+export const mockUserAccountRepo = (): Mocked<UserAccountRepositoryPort> => ({
+  findByUserId: vi.fn(),
+  createLink: vi.fn(),
+  findOwnersByAccountId: vi.fn(),
+  countByAccountId: vi.fn(),
 });

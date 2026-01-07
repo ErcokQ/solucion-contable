@@ -54,6 +54,28 @@ import { ReportsRepositoryPort } from '@reports/application/ports/cfdi-report.po
 import { TypeOrmReportsRepository } from '@reports/infrastructure/repositories/typeorm-reports.repository';
 import { GenerateIvaReportUseCase } from '@reports/application/use-cases/generate-iva-report.usecase';
 
+/**User account */
+import { UserAccountRepositoryPort } from '@auth/application/ports/user-account-repository.port';
+import { TypeOrmUserAccountRepository } from '@auth/infrastructure/repositories/typeorm-user-account.repository';
+import { AccountRepositoryPort } from '@account/application/ports/account-repository.port';
+import { CompanyRepositoryPort } from '@account/application/ports/company-repository.port';
+import { TypeOrmAccountRepository } from '@account/infraestructure/repositories/typeorm-account.repository';
+import { TypeOrmCompanyRepository } from '@account/infraestructure/repositories/typeorm-company.repository';
+
+/**Reset password */
+
+import { ResetPasswordRepositoryPort } from '@auth/application/ports/reset-password-repository.port';
+import { EmailVerificationRepositoryPort } from '@auth/application/ports/email-verification-repository.port';
+import { MailServicePort } from '@auth/application/ports/mail-service.port';
+//import { ConsoleMailService } from '@auth/infrastructure/services/console-mail.service';
+import { ResendMailService } from '@auth/infrastructure/services/resend-mail.service';
+import { RequestPasswordResetUseCase } from '@auth/application/use-cases/request-password-reset.usecase';
+import { ResetPasswordUseCase } from '@auth/application/use-cases/reset-password.usecase';
+import { TypeOrmResetPasswordRepository } from '@auth/infrastructure/repositories/typeorm-reset-password.repository';
+import { TypeOrmEmailVerificationRepository } from '@auth/infrastructure/repositories/typeorm-email-verification.repository';
+import { RequestEmailVerificationUseCase } from '@auth/application/use-cases/request-email-verification.usecase';
+import { VerifyEmailUseCase } from '@auth/application/use-cases/verify-email.usecase';
+
 container.registerSingleton<EventBus>('EventBus', InMemoryEventBus);
 
 container.registerSingleton<HashServicePort>(
@@ -136,5 +158,39 @@ container.registerSingleton<ReportsRepositoryPort>(
   'ReportsRepo',
   TypeOrmReportsRepository,
 );
+//account
+
+container.register<UserAccountRepositoryPort>('UserAccountRepo', {
+  useClass: TypeOrmUserAccountRepository,
+});
+
+container.register<AccountRepositoryPort>('AccountRepo', {
+  useClass: TypeOrmAccountRepository,
+});
+
+container.register<CompanyRepositoryPort>('CompanyRepo', {
+  useClass: TypeOrmCompanyRepository,
+});
+
+/** Reset Password */
+container.registerSingleton<ResetPasswordRepositoryPort>(
+  'ResetPasswordRepo',
+  TypeOrmResetPasswordRepository,
+);
+
+container.registerSingleton<EmailVerificationRepositoryPort>(
+  'EmailVerificationRepo',
+  TypeOrmEmailVerificationRepository,
+);
+
+container.registerSingleton<MailServicePort>(
+  'MailServicePort',
+  ResendMailService,
+);
+
+container.registerSingleton(RequestPasswordResetUseCase);
+container.registerSingleton(ResetPasswordUseCase);
+container.registerSingleton(RequestEmailVerificationUseCase);
+container.registerSingleton(VerifyEmailUseCase);
 
 export { container };
